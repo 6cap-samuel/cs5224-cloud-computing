@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VapeWatch Officer Admin Portal</title>
+  <style>
+    :root {
+      --background: #0f172a;
+      --card-bg: #1e293b;
+      --panel-bg: rgba(15, 23, 42, 0.9);
+      --text-primary: #f8fafc;
+      --text-muted: #cbd5f5;
+      --accent: #38bdf8;
+      --accent-dark: #0ea5e9;
+      --border: rgba(148, 163, 184, 0.2);
+      --danger: #f87171;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+      background: radial-gradient(circle at top, rgba(14, 116, 144, 0.35), transparent 55%),
+                  radial-gradient(circle at bottom, rgba(99, 102, 241, 0.25), transparent 45%),
+                  var(--background);
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 2rem 1.5rem 1rem;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .brand h1 {
+      font-size: 2rem;
+      margin: 0;
+      letter-spacing: -0.01em;
+    }
+
+    .brand p {
+      margin: 0;
+      color: var(--text-muted);
+    }
+
+    main {
+      flex: 1;
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto 3rem;
+      padding: 0 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      align-items: center;
+    }
+
+    .button {
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: var(--background);
+      font-weight: 600;
+      padding: 0.65rem 1.4rem;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .button:not(:disabled):hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 20px rgba(56, 189, 248, 0.25);
+    }
+
+    .status {
+      min-height: 1.5rem;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      box-shadow: 0 20px 35px rgba(15, 23, 42, 0.35);
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: 0.02em;
+    }
+
+    .meta {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.35rem 0.75rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .meta span {
+      display: flex;
+      gap: 0.35rem;
+      align-items: baseline;
+      line-height: 1.4;
+    }
+
+    .meta strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .notes {
+      font-size: 0.92rem;
+      line-height: 1.5;
+      background: rgba(15, 23, 42, 0.55);
+      border-radius: 14px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+    }
+
+    .preview {
+      background: rgba(15, 23, 42, 0.65);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 180px;
+    }
+
+    .preview img {
+      max-width: 100%;
+      max-height: 240px;
+      border-radius: 12px;
+      display: block;
+    }
+
+    .empty {
+      text-align: center;
+      color: var(--text-muted);
+      padding: 3rem 0;
+      font-size: 1rem;
+    }
+
+    footer {
+      text-align: center;
+      color: rgba(226, 232, 240, 0.55);
+      padding: 1.5rem 1rem 2.5rem;
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 640px) {
+      .brand h1 {
+        font-size: 1.6rem;
+      }
+      .controls {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .button {
+        width: 100%;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <h1>VapeWatch Officer Admin Portal</h1>
+      <p>Review incoming citizen submissions, monitor locations, and triage reports in real time.</p>
+    </div>
+  </header>
+  <main>
+    <div class="controls">
+      <button id="refresh" class="button">Refresh</button>
+      <button id="load-more" class="button" disabled>Load more</button>
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+    </div>
+    <section id="results" class="grid" aria-live="polite" aria-busy="false"></section>
+    <div id="empty-state" class="empty" hidden>No reports available yet. Submissions will appear here automatically.</div>
+  </main>
+  <footer>Restricted access: For authorised VapeWatch officers only.</footer>
+  <script>
+    const API_BASE_URL = "${api_base_url}";
+
+    const statusEl = document.getElementById('status');
+    const resultsEl = document.getElementById('results');
+    const emptyStateEl = document.getElementById('empty-state');
+    const refreshBtn = document.getElementById('refresh');
+    const loadMoreBtn = document.getElementById('load-more');
+
+    let nextCursor = null;
+    let loading = false;
+
+    const setStatus = (message, variant = '') => {
+      statusEl.textContent = message || '';
+      statusEl.dataset.variant = variant;
+    };
+
+    const formatDate = (iso) => {
+      if (!iso) return '—';
+      try {
+        return new Date(iso).toLocaleString();
+      } catch (error) {
+        return iso;
+      }
+    };
+
+    const renderReportCard = (report) => {
+      const card = document.createElement('article');
+      card.className = 'card';
+
+      const title = document.createElement('h2');
+      title.textContent = `Report $${report.report_id || 'Unknown'}`;
+      card.appendChild(title);
+
+      const meta = document.createElement('div');
+      meta.className = 'meta';
+      meta.innerHTML = `
+        <span><strong>Submitted</strong> $${formatDate(report.submitted_at)}</span>
+        <span><strong>Status</strong> $${report.status || 'PENDING_REVIEW'}</span>
+        <span><strong>Filename</strong> $${report.filename || '—'}</span>
+        <span><strong>Location</strong> $${report.location ? `$${report.location.latitude?.toFixed?.(5) ?? report.location.latitude}, $${report.location.longitude?.toFixed?.(5) ?? report.location.longitude}` : 'Not attached'}</span>
+        $${report.location && typeof report.location.accuracy_m === 'number' ? `<span><strong>Accuracy</strong> ±$${report.location.accuracy_m} m</span>` : ''}
+      `;
+      card.appendChild(meta);
+
+      if (report.notes) {
+        const notes = document.createElement('div');
+        notes.className = 'notes';
+        notes.textContent = report.notes;
+        card.appendChild(notes);
+      }
+
+      const preview = document.createElement('div');
+      preview.className = 'preview';
+      if (report.image_url) {
+        const img = document.createElement('img');
+        img.src = report.image_url;
+        img.alt = `Evidence for report $${report.report_id}`;
+        img.loading = 'lazy';
+        preview.appendChild(img);
+      } else {
+        preview.textContent = 'No preview available';
+      }
+      card.appendChild(preview);
+
+      return card;
+    };
+
+    const clearResults = () => {
+      resultsEl.innerHTML = '';
+      emptyStateEl.hidden = true;
+      nextCursor = null;
+    };
+
+    const setLoading = (state) => {
+      loading = state;
+      if (state) {
+        resultsEl.setAttribute('aria-busy', 'true');
+      } else {
+        resultsEl.removeAttribute('aria-busy');
+      }
+      refreshBtn.disabled = state;
+      loadMoreBtn.disabled = state || !nextCursor;
+    };
+
+    const fetchReports = async (options = {}) => {
+      if (loading) return;
+      setLoading(true);
+      const { reset = false } = options;
+      if (reset) {
+        clearResults();
+        setStatus('Fetching latest reports…');
+      } else {
+        setStatus('Loading more reports…');
+      }
+
+      const params = new URLSearchParams({ limit: '24' });
+      if (!reset && nextCursor) {
+        params.set('cursor', nextCursor);
+      }
+
+      try {
+        const response = await fetch(`$${API_BASE_URL}/reports?$${params.toString()}`);
+        if (!response.ok) {
+          throw new Error(`HTTP $${response.status}`);
+        }
+        const data = await response.json();
+        const items = Array.isArray(data.items) ? data.items : [];
+
+        if (reset) {
+          resultsEl.innerHTML = '';
+        }
+
+        if (items.length === 0 && resultsEl.children.length === 0) {
+          emptyStateEl.hidden = false;
+        } else {
+          emptyStateEl.hidden = true;
+        }
+
+        items.forEach((item) => {
+          const card = renderReportCard(item);
+          resultsEl.appendChild(card);
+        });
+
+        nextCursor = data.next_cursor || null;
+        loadMoreBtn.disabled = !nextCursor;
+        if (nextCursor) {
+          setStatus(`Showing $${resultsEl.children.length} report$${resultsEl.children.length === 1 ? '' : 's'} (more available)…`);
+        } else {
+          setStatus(`Showing $${resultsEl.children.length} report$${resultsEl.children.length === 1 ? '' : 's'}.`);
+        }
+      } catch (error) {
+        console.error(error);
+        setStatus('Unable to load reports right now. Please retry in a moment.', 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    refreshBtn.addEventListener('click', () => fetchReports({ reset: true }));
+    loadMoreBtn.addEventListener('click', () => fetchReports({ reset: false }));
+
+    fetchReports({ reset: true });
+  </script>
+</body>
+</html>
