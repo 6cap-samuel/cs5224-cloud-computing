@@ -1,0 +1,14 @@
+# macOS cruft
+.DS_Store
+
+# Python cache
+__pycache__/
+
+# Terraform metadata and state
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+*.tfstate.*
+
+# Build artifacts
+artifacts/*.zip

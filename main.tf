@@ -29,7 +29,8 @@ resource "random_id" "suffix" {
 # S3 buckets
 # ----------------------
 resource "aws_s3_bucket" "raw" {
-  bucket = "vapewatch-raw-${var.env}-${random_id.suffix.hex}"
+  bucket        = "vapewatch-raw-${var.env}-${random_id.suffix.hex}"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_versioning" "raw_v" {
@@ -48,7 +49,8 @@ resource "aws_s3_bucket_public_access_block" "raw_pab" {
 }
 
 resource "aws_s3_bucket" "evidence" {
-  bucket = "vapewatch-evidence-${var.env}-${random_id.suffix.hex}"
+  bucket        = "vapewatch-evidence-${var.env}-${random_id.suffix.hex}"
+  force_destroy = true
 }
 
 resource "aws_s3_bucket_versioning" "evidence_v" {
@@ -100,6 +102,115 @@ resource "aws_s3_bucket_public_access_block" "audit_pab" {
 }
 
 # ----------------------
+# Static website frontend bucket (public)
+# ----------------------
+resource "aws_s3_bucket" "frontend" {
+  bucket        = "vapewatch-frontend-${var.env}-${random_id.suffix.hex}"
+  force_destroy = true
+}
+
+resource "aws_s3_bucket_public_access_block" "frontend" {
+  bucket                  = aws_s3_bucket.frontend.id
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_ownership_controls" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+resource "aws_s3_bucket_acl" "frontend" {
+  depends_on = [
+    aws_s3_bucket_public_access_block.frontend,
+    aws_s3_bucket_ownership_controls.frontend
+  ]
+  bucket = aws_s3_bucket.frontend.id
+  acl    = "public-read"
+}
+
+resource "aws_s3_bucket_website_configuration" "frontend" {
+  bucket = aws_s3_bucket.frontend.id
+  index_document {
+    suffix = "index.html"
+  }
+  error_document {
+    key = "index.html"
+  }
+}
+
+resource "aws_s3_object" "frontend_index" {
+  bucket       = aws_s3_bucket.frontend.bucket
+  key          = "index.html"
+  content_type = "text/html"
+  acl          = "public-read"
+  content = templatefile("${path.module}/frontend/index.html.tmpl", {
+    api_base_url = "${aws_apigatewayv2_api.http.api_endpoint}/${aws_apigatewayv2_stage.http.name}"
+  })
+}
+
+resource "aws_cloudfront_distribution" "frontend" {
+  enabled             = true
+  comment             = "VapeWatch frontend ${var.env}"
+  default_root_object = "index.html"
+  price_class         = "PriceClass_100"
+  wait_for_deployment = false
+
+  origin {
+    domain_name = aws_s3_bucket.frontend.bucket_regional_domain_name
+    origin_id   = "vapewatch-frontend-${var.env}"
+
+    s3_origin_config {
+      origin_access_identity = ""
+    }
+  }
+
+  default_cache_behavior {
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "vapewatch-frontend-${var.env}"
+
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+
+    cache_policy_id            = "658327ea-f89d-4fab-a63d-7e88639e58f6" # CachingOptimized
+    origin_request_policy_id   = "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf" # CORS-S3Origin
+    response_headers_policy_id = "67f7725c-6f97-4210-82d7-5512b31e9d03" # SecurityHeadersPolicy
+  }
+
+  custom_error_response {
+    error_code            = 403
+    response_code         = 200
+    response_page_path    = "/index.html"
+    error_caching_min_ttl = 0
+  }
+
+  custom_error_response {
+    error_code            = 404
+    response_code         = 200
+    response_page_path    = "/index.html"
+    error_caching_min_ttl = 0
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+    minimum_protocol_version       = "TLSv1.2_2021"
+  }
+
+  depends_on = [aws_s3_bucket_website_configuration.frontend]
+}
+
+# ----------------------
 # DynamoDB (Reports)
 # ----------------------
 resource "aws_dynamodb_table" "reports" {
@@ -138,8 +249,8 @@ resource "aws_cognito_user_pool" "officers" {
 }
 
 resource "aws_cognito_user_pool_client" "officers" {
-  name           = "vapewatch-officers-client-${var.env}"
-  user_pool_id   = aws_cognito_user_pool.officers.id
+  name            = "vapewatch-officers-client-${var.env}"
+  user_pool_id    = aws_cognito_user_pool.officers.id
   generate_secret = false
 }
 
@@ -181,7 +292,7 @@ data "aws_iam_policy_document" "lambda_inline" {
   }
 
   statement {
-    sid     = "DynamoDBAccess"
+    sid = "DynamoDBAccess"
     actions = [
       "dynamodb:PutItem",
       "dynamodb:GetItem",
@@ -309,6 +420,8 @@ resource "aws_lambda_function" "ingest" {
   environment {
     variables = {
       STATE_MACHINE_ARN = aws_sfn_state_machine.pipeline.arn
+      RAW_BUCKET        = aws_s3_bucket.raw.bucket
+      EVIDENCE_BUCKET   = aws_s3_bucket.evidence.bucket
     }
   }
 }
@@ -384,7 +497,7 @@ locals {
   sfn_def = jsonencode({
     Comment = "VapeWatch pipeline",
     StartAt = "Redaction",
-    States  = {
+    States = {
       Redaction = {
         Type     = "Task",
         Resource = "${aws_lambda_function.redaction.arn}",
@@ -421,6 +534,11 @@ resource "aws_sfn_state_machine" "pipeline" {
 resource "aws_apigatewayv2_api" "http" {
   name          = "vapewatch-api-${var.env}"
   protocol_type = "HTTP"
+  cors_configuration {
+    allow_origins = ["*"]
+    allow_methods = ["OPTIONS", "POST"]
+    allow_headers = ["content-type"]
+  }
 }
 
 resource "aws_apigatewayv2_integration" "ingest" {
