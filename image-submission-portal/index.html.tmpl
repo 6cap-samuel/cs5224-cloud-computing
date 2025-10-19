@@ -41,6 +41,18 @@
       color: var(--text-color);
     }
 
+    .visually-hidden {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
     .page {
       min-height: 100%;
       display: flex;
@@ -568,40 +580,37 @@
       locationState.captured_at = null;
       locationStatus.textContent = 'No location attached yet.';
       locationStatus.dataset.state = '';
+      locationStatus.classList.remove('visually-hidden');
       locationClear.disabled = true;
       resetLocationMap();
-    };
-
-    const formatCoord = (value) => {
-      if (value === null || value === undefined) {
-        return '';
-      }
-      return value.toFixed(5);
     };
 
     const updateLocationAttached = () => {
       if (locationState.latitude === null || locationState.longitude === null) {
         return resetLocationState();
       }
-      let message = 'Attached: ' + formatCoord(locationState.latitude) + '°, ' + formatCoord(locationState.longitude) + '°';
+      let message = 'Location attached. Map preview updated below.';
       if (typeof locationState.accuracy === 'number') {
         const rounded = Math.round(locationState.accuracy);
-        message += ' (±' + rounded + ' m)';
+        message += ' Accuracy about ±' + rounded + ' m.';
       }
       locationStatus.textContent = message;
       locationStatus.dataset.state = 'attached';
+      locationStatus.classList.add('visually-hidden');
       locationClear.disabled = false;
       renderLocationMap();
     };
 
     const useGeolocation = () => {
       if (!navigator.geolocation) {
+        locationStatus.classList.remove('visually-hidden');
         locationStatus.textContent = 'This browser does not support location services.';
         locationStatus.dataset.state = 'error';
         locationCapture.disabled = true;
         return;
       }
 
+      locationStatus.classList.remove('visually-hidden');
       locationStatus.textContent = 'Requesting device location...';
       locationStatus.dataset.state = '';
       locationCapture.disabled = true;
@@ -612,6 +621,7 @@
           const lat = Number(coords.latitude.toFixed(6));
           const lon = Number(coords.longitude.toFixed(6));
           if (isNaN(lat) || isNaN(lon)) {
+            locationStatus.classList.remove('visually-hidden');
             locationStatus.textContent = 'Received invalid coordinates from the device.';
             locationStatus.dataset.state = 'error';
             locationCapture.disabled = false;
@@ -633,6 +643,7 @@
           } else if (error && error.code === error.TIMEOUT) {
             message = 'Location request timed out. Try again.';
           }
+          locationStatus.classList.remove('visually-hidden');
           locationStatus.textContent = message;
           locationStatus.dataset.state = 'error';
           locationCapture.disabled = false;

@@ -104,37 +104,28 @@ resource "aws_s3_bucket_public_access_block" "audit_pab" {
 # ----------------------
 # Static website frontend bucket (public)
 # ----------------------
-resource "aws_s3_bucket" "frontend" {
+resource "aws_s3_bucket" "image_submission_portal" {
   bucket        = "vapewatch-frontend-${var.env}-${random_id.suffix.hex}"
   force_destroy = true
 }
 
-resource "aws_s3_bucket_public_access_block" "frontend" {
-  bucket                  = aws_s3_bucket.frontend.id
+resource "aws_s3_bucket_public_access_block" "image_submission_portal" {
+  bucket                  = aws_s3_bucket.image_submission_portal.id
   block_public_acls       = false
   block_public_policy     = false
   ignore_public_acls      = false
   restrict_public_buckets = false
 }
 
-resource "aws_s3_bucket_ownership_controls" "frontend" {
-  bucket = aws_s3_bucket.frontend.id
+resource "aws_s3_bucket_ownership_controls" "image_submission_portal" {
+  bucket = aws_s3_bucket.image_submission_portal.id
   rule {
     object_ownership = "BucketOwnerPreferred"
   }
 }
 
-resource "aws_s3_bucket_acl" "frontend" {
-  depends_on = [
-    aws_s3_bucket_public_access_block.frontend,
-    aws_s3_bucket_ownership_controls.frontend
-  ]
-  bucket = aws_s3_bucket.frontend.id
-  acl    = "public-read"
-}
-
-resource "aws_s3_bucket_website_configuration" "frontend" {
-  bucket = aws_s3_bucket.frontend.id
+resource "aws_s3_bucket_website_configuration" "image_submission_portal" {
+  bucket = aws_s3_bucket.image_submission_portal.id
   index_document {
     suffix = "index.html"
   }
@@ -143,17 +134,60 @@ resource "aws_s3_bucket_website_configuration" "frontend" {
   }
 }
 
-resource "aws_s3_object" "frontend_index" {
-  bucket       = aws_s3_bucket.frontend.bucket
+resource "aws_s3_bucket_policy" "image_submission_portal" {
+  bucket = aws_s3_bucket.image_submission_portal.id
+  policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "AllowPublicRead"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = ["s3:GetObject"]
+        Resource = [
+          "${aws_s3_bucket.image_submission_portal.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_s3_object" "image_submission_portal_index" {
+  bucket       = aws_s3_bucket.image_submission_portal.bucket
   key          = "index.html"
   content_type = "text/html"
-  acl          = "public-read"
-  content = templatefile("${path.module}/frontend/index.html.tmpl", {
+  content = templatefile("${path.module}/image-submission-portal/index.html.tmpl", {
     api_base_url = "${aws_apigatewayv2_api.http.api_endpoint}/${aws_apigatewayv2_stage.http.name}"
   })
 }
 
-resource "aws_cloudfront_distribution" "frontend" {
+resource "aws_cloudfront_cache_policy" "image_submission_portal_short_ttl" {
+  name    = "vapewatch-frontend-${var.env}-short-ttl"
+  comment = "Short TTLs for dynamic VapeWatch frontend shell"
+
+  default_ttl = 300
+  max_ttl     = 600
+  min_ttl     = 0
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    enable_accept_encoding_brotli = true
+    enable_accept_encoding_gzip   = true
+
+    headers_config {
+      header_behavior = "none"
+    }
+
+    cookies_config {
+      cookie_behavior = "none"
+    }
+
+    query_strings_config {
+      query_string_behavior = "none"
+    }
+  }
+}
+
+resource "aws_cloudfront_distribution" "image_submission_portal" {
   enabled             = true
   comment             = "VapeWatch frontend ${var.env}"
   default_root_object = "index.html"
@@ -161,7 +195,7 @@ resource "aws_cloudfront_distribution" "frontend" {
   wait_for_deployment = false
 
   origin {
-    domain_name = aws_s3_bucket.frontend.bucket_regional_domain_name
+    domain_name = aws_s3_bucket.image_submission_portal.bucket_regional_domain_name
     origin_id   = "vapewatch-frontend-${var.env}"
 
     s3_origin_config {
@@ -177,7 +211,7 @@ resource "aws_cloudfront_distribution" "frontend" {
     viewer_protocol_policy = "redirect-to-https"
     compress               = true
 
-    cache_policy_id            = "658327ea-f89d-4fab-a63d-7e88639e58f6" # CachingOptimized
+    cache_policy_id            = aws_cloudfront_cache_policy.image_submission_portal_short_ttl.id
     origin_request_policy_id   = "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf" # CORS-S3Origin
     response_headers_policy_id = "67f7725c-6f97-4210-82d7-5512b31e9d03" # SecurityHeadersPolicy
   }
@@ -207,7 +241,147 @@ resource "aws_cloudfront_distribution" "frontend" {
     minimum_protocol_version       = "TLSv1.2_2021"
   }
 
-  depends_on = [aws_s3_bucket_website_configuration.frontend]
+  depends_on = [aws_s3_bucket_website_configuration.image_submission_portal]
+}
+
+resource "aws_s3_bucket" "officer_admin_portal" {
+  bucket        = "vapewatch-officer-admin-${var.env}-${random_id.suffix.hex}"
+  force_destroy = true
+}
+
+resource "aws_s3_bucket_public_access_block" "officer_admin_portal" {
+  bucket                  = aws_s3_bucket.officer_admin_portal.id
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_ownership_controls" "officer_admin_portal" {
+  bucket = aws_s3_bucket.officer_admin_portal.id
+  rule {
+    object_ownership = "BucketOwnerPreferred"
+  }
+}
+
+resource "aws_s3_bucket_website_configuration" "officer_admin_portal" {
+  bucket = aws_s3_bucket.officer_admin_portal.id
+  index_document {
+    suffix = "index.html"
+  }
+  error_document {
+    key = "index.html"
+  }
+}
+
+resource "aws_s3_bucket_policy" "officer_admin_portal" {
+  bucket = aws_s3_bucket.officer_admin_portal.id
+  policy = jsonencode({
+    Version   = "2012-10-17"
+    Statement = [
+      {
+        Sid       = "AllowPublicRead"
+        Effect    = "Allow"
+        Principal = "*"
+        Action    = ["s3:GetObject"]
+        Resource = [
+          "${aws_s3_bucket.officer_admin_portal.arn}/*"
+        ]
+      }
+    ]
+  })
+}
+
+resource "aws_s3_object" "officer_admin_portal_index" {
+  bucket       = aws_s3_bucket.officer_admin_portal.bucket
+  key          = "index.html"
+  content_type = "text/html"
+  content = templatefile("${path.module}/officer-admin-portal/index.html.tmpl", {
+    api_base_url = "${aws_apigatewayv2_api.http.api_endpoint}/${aws_apigatewayv2_stage.http.name}"
+  })
+}
+
+resource "aws_cloudfront_cache_policy" "officer_admin_portal_short_ttl" {
+  name    = "vapewatch-officer-admin-${var.env}-short-ttl"
+  comment = "Short TTLs for officer admin portal shell"
+
+  default_ttl = 120
+  max_ttl     = 300
+  min_ttl     = 0
+
+  parameters_in_cache_key_and_forwarded_to_origin {
+    enable_accept_encoding_brotli = true
+    enable_accept_encoding_gzip   = true
+
+    headers_config {
+      header_behavior = "none"
+    }
+
+    cookies_config {
+      cookie_behavior = "none"
+    }
+
+    query_strings_config {
+      query_string_behavior = "none"
+    }
+  }
+}
+
+resource "aws_cloudfront_distribution" "officer_admin_portal" {
+  enabled             = true
+  comment             = "VapeWatch officer admin portal ${var.env}"
+  default_root_object = "index.html"
+  price_class         = "PriceClass_100"
+  wait_for_deployment = false
+
+  origin {
+    domain_name = aws_s3_bucket.officer_admin_portal.bucket_regional_domain_name
+    origin_id   = "vapewatch-officer-admin-${var.env}"
+
+    s3_origin_config {
+      origin_access_identity = ""
+    }
+  }
+
+  default_cache_behavior {
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "vapewatch-officer-admin-${var.env}"
+
+    viewer_protocol_policy = "redirect-to-https"
+    compress               = true
+
+    cache_policy_id            = aws_cloudfront_cache_policy.officer_admin_portal_short_ttl.id
+    origin_request_policy_id   = "88a5eaf4-2fd4-4709-b370-b4c650ea3fcf" # CORS-S3Origin
+    response_headers_policy_id = "67f7725c-6f97-4210-82d7-5512b31e9d03" # SecurityHeadersPolicy
+  }
+
+  custom_error_response {
+    error_code            = 403
+    response_code         = 200
+    response_page_path    = "/index.html"
+    error_caching_min_ttl = 0
+  }
+
+  custom_error_response {
+    error_code            = 404
+    response_code         = 200
+    response_page_path    = "/index.html"
+    error_caching_min_ttl = 0
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+    minimum_protocol_version       = "TLSv1.2_2021"
+  }
+
+  depends_on = [aws_s3_bucket_website_configuration.officer_admin_portal]
 }
 
 # ----------------------
@@ -408,6 +582,12 @@ data "archive_file" "audit_zip" {
   output_path = "${path.module}/artifacts/audit_sink.zip"
 }
 
+data "archive_file" "officer_admin_zip" {
+  type        = "zip"
+  source_dir  = "${var.lambda_src_root}/officer_admin_portal"
+  output_path = "${path.module}/artifacts/officer_admin_portal.zip"
+}
+
 # ----------------------
 # Lambda functions
 # ----------------------
@@ -484,6 +664,21 @@ resource "aws_lambda_function" "audit_sink" {
   }
 }
 
+resource "aws_lambda_function" "officer_admin" {
+  function_name = "vapewatch-officer-admin-${var.env}"
+  role          = aws_iam_role.lambda_exec.arn
+  filename      = data.archive_file.officer_admin_zip.output_path
+  handler       = "main.lambda_handler"
+  runtime       = "python3.11"
+  environment {
+    variables = {
+      REPORTS_TABLE  = aws_dynamodb_table.reports.name
+      RAW_BUCKET     = aws_s3_bucket.raw.bucket
+      SIGNED_URL_TTL = "900"
+    }
+  }
+}
+
 resource "aws_lambda_event_source_mapping" "reports_stream" {
   event_source_arn  = aws_dynamodb_table.reports.stream_arn
   function_name     = aws_lambda_function.audit_sink.arn
@@ -536,7 +731,7 @@ resource "aws_apigatewayv2_api" "http" {
   protocol_type = "HTTP"
   cors_configuration {
     allow_origins = ["*"]
-    allow_methods = ["OPTIONS", "POST"]
+    allow_methods = ["OPTIONS", "POST", "GET"]
     allow_headers = ["content-type"]
   }
 }
@@ -554,10 +749,31 @@ resource "aws_apigatewayv2_route" "reports" {
   target    = "integrations/${aws_apigatewayv2_integration.ingest.id}"
 }
 
+resource "aws_apigatewayv2_integration" "officer_reports" {
+  api_id                 = aws_apigatewayv2_api.http.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.officer_admin.invoke_arn
+  payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "reports_list" {
+  api_id    = aws_apigatewayv2_api.http.id
+  route_key = "GET /reports"
+  target    = "integrations/${aws_apigatewayv2_integration.officer_reports.id}"
+}
+
 resource "aws_lambda_permission" "api_invoke_ingest" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.ingest.function_name
+  principal     = "apigateway.amazonaws.com"
+  source_arn    = "${aws_apigatewayv2_api.http.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "api_invoke_officer" {
+  statement_id  = "AllowAPIGatewayInvokeOfficer"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.officer_admin.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.http.execution_arn}/*/*"
 }
