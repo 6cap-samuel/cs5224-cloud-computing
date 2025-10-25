@@ -15,10 +15,27 @@
       --accent-dark: #0ea5e9;
       --border: rgba(148, 163, 184, 0.2);
       --danger: #f87171;
+      --success: #4ade80;
     }
 
     * {
       box-sizing: border-box;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    body[data-auth="anonymous"] #app-view {
+      display: none !important;
+    }
+
+    body[data-auth="authenticated"] #login-view {
+      display: none !important;
+    }
+
+    body[data-auth="authenticated"] #app-view {
+      display: flex;
     }
 
     body {
@@ -67,11 +84,149 @@
       gap: 1.5rem;
     }
 
+    #app-view {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    #login-view {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2.5rem 1.5rem 4rem;
+    }
+
+    .login-card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.5rem;
+      max-width: 420px;
+      width: 100%;
+      box-shadow: 0 30px 45px rgba(15, 23, 42, 0.45);
+      display: flex;
+      flex-direction: column;
+      gap: 1.4rem;
+    }
+
+    .login-card h2 {
+      margin: 0;
+      font-size: 1.6rem;
+      letter-spacing: -0.01em;
+    }
+
+    .login-card p {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .auth-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .auth-field label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #e2e8f0;
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .auth-note {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .auth-field input {
+      padding: 0.85rem 1rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.6);
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    }
+
+    .auth-field input::placeholder {
+      color: rgba(203, 213, 225, 0.6);
+    }
+
+    .auth-field input:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: rgba(15, 23, 42, 0.85);
+      box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.15);
+    }
+
+    .auth-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .auth-actions .button {
+      width: 100%;
+      text-align: center;
+    }
+
+    .auth-status {
+      min-height: 1.4rem;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+    }
+
+    .auth-status[data-variant="error"] {
+      color: var(--danger);
+    }
+
+    .auth-status[data-variant="success"] {
+      color: var(--success);
+    }
+
+    .auth-secondary-actions {
+      display: flex;
+      justify-content: flex-end;
+    }
+
     .controls {
+      display: flex;
+      flex-direction: column;
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1rem 1.25rem;
+      gap: 0.9rem;
+    }
+
+    .controls-row {
       display: flex;
       flex-wrap: wrap;
       gap: 0.75rem;
       align-items: center;
+    }
+
+    .controls-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+
+    .controls-row .spacer {
+      flex: 1;
     }
 
     .button {
@@ -97,10 +252,30 @@
       box-shadow: 0 12px 20px rgba(56, 189, 248, 0.25);
     }
 
+    .button-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    .button-ghost:not(:disabled):hover {
+      color: var(--text-primary);
+      border-color: rgba(148, 163, 184, 0.6);
+      box-shadow: none;
+    }
+
     .status {
       min-height: 1.5rem;
       font-size: 0.95rem;
       color: var(--text-muted);
+    }
+
+    .status[data-variant="error"] {
+      color: var(--danger);
+    }
+
+    .status[data-variant="success"] {
+      color: var(--success);
     }
 
     .grid {
@@ -187,17 +362,41 @@
       font-size: 0.85rem;
     }
 
+    @media (max-width: 768px) {
+      .login-card {
+        padding: 2rem;
+      }
+
+      .controls {
+        padding: 1rem;
+      }
+
+      .controls-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .button-ghost {
+        width: 100%;
+        text-align: center;
+      }
+    }
+
     @media (max-width: 640px) {
       .brand h1 {
         font-size: 1.6rem;
       }
-      .controls {
-        flex-direction: column;
-        align-items: stretch;
+
+      #login-view {
+        padding: 2rem 1rem 3rem;
       }
-      .button {
-        width: 100%;
-        text-align: center;
+
+      .login-card {
+        padding: 1.75rem;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -210,126 +409,659 @@
     </div>
   </header>
   <main>
-    <div class="controls">
-      <button id="refresh" class="button">Refresh</button>
-      <button id="load-more" class="button" disabled>Load more</button>
-      <div id="status" class="status" role="status" aria-live="polite"></div>
-    </div>
-    <section id="results" class="grid" aria-live="polite" aria-busy="false"></section>
-    <div id="empty-state" class="empty" hidden>No reports available yet. Submissions will appear here automatically.</div>
+    <section id="login-view" aria-labelledby="login-title">
+      <form id="login-form" class="login-card" autocomplete="on" novalidate>
+        <div>
+          <h2 id="login-title">Officer login</h2>
+          <p>Sign in with your authorised VapeWatch officer account to access the admin workspace.</p>
+        </div>
+        <div id="login-fields" class="stack">
+          <div class="auth-field">
+            <label for="username">Email</label>
+            <input id="username" name="username" type="email" autocomplete="username" placeholder="officer@vapewatch.gov" required>
+          </div>
+          <div class="auth-field">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+          </div>
+        </div>
+        <div id="new-password-fields" class="stack" hidden>
+          <p class="auth-note" id="new-password-hint">This account needs a new password before you can continue.</p>
+          <div class="auth-field">
+            <label for="new-password">New password</label>
+            <input id="new-password" name="new-password" type="password" autocomplete="new-password" placeholder="Create a new password">
+          </div>
+          <div class="auth-field">
+            <label for="confirm-password">Confirm password</label>
+            <input id="confirm-password" name="confirm-password" type="password" autocomplete="new-password" placeholder="Re-enter the new password">
+          </div>
+          <div class="auth-secondary-actions">
+            <button id="cancel-new-password" class="button button-ghost" type="button">Use a different account</button>
+          </div>
+        </div>
+        <div class="auth-actions">
+          <button id="login-submit" class="button" type="submit">Sign in</button>
+        </div>
+        <div id="login-status" class="auth-status" role="alert" aria-live="assertive"></div>
+      </form>
+    </section>
+    <section id="app-view" hidden>
+      <div class="controls">
+        <div class="controls-row">
+          <div class="controls-group">
+            <button id="refresh" class="button" type="button">Refresh</button>
+            <button id="load-more" class="button" type="button" disabled>Load more</button>
+          </div>
+          <div class="spacer"></div>
+          <button id="logout" class="button button-ghost" type="button">Sign out</button>
+        </div>
+        <div id="status" class="status" role="status" aria-live="polite"></div>
+      </div>
+      <section id="results" class="grid" aria-live="polite" aria-busy="false"></section>
+      <div id="empty-state" class="empty" hidden>No reports available yet. Submissions will appear here automatically.</div>
+    </section>
   </main>
   <footer>Restricted access: For authorised VapeWatch officers only.</footer>
   <script>
     const API_BASE_URL = "${api_base_url}";
+    const COGNITO_CLIENT_ID = "${cognito_client_id}";
+    const COGNITO_REGION = "${cognito_region}";
+    const COGNITO_ENDPOINT = "https://cognito-idp." + COGNITO_REGION + ".amazonaws.com/";
+    const AUTH_STORAGE_KEY = "vapewatch.officer.auth";
+    const TOKEN_EXPIRY_BUFFER_MS = 60000;
 
-    const statusEl = document.getElementById('status');
-    const resultsEl = document.getElementById('results');
-    const emptyStateEl = document.getElementById('empty-state');
-    const refreshBtn = document.getElementById('refresh');
-    const loadMoreBtn = document.getElementById('load-more');
+    if (!document.body.dataset.auth) {
+      document.body.dataset.auth = "anonymous";
+    }
 
-    let nextCursor = null;
-    let loading = false;
+    const loginView = document.getElementById("login-view");
+    const appView = document.getElementById("app-view");
+    const loginForm = document.getElementById("login-form");
+    const loginButton = document.getElementById("login-submit");
+    const loginStatusEl = document.getElementById("login-status");
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+    const loginFields = document.getElementById("login-fields");
+    const newPasswordFields = document.getElementById("new-password-fields");
+    const newPasswordInput = document.getElementById("new-password");
+    const confirmPasswordInput = document.getElementById("confirm-password");
+    const cancelNewPasswordBtn = document.getElementById("cancel-new-password");
 
-    const setStatus = (message, variant = '') => {
-      statusEl.textContent = message || '';
-      statusEl.dataset.variant = variant;
+    const statusEl = document.getElementById("status");
+    const resultsEl = document.getElementById("results");
+    const emptyStateEl = document.getElementById("empty-state");
+    const refreshBtn = document.getElementById("refresh");
+    const loadMoreBtn = document.getElementById("load-more");
+    const logoutBtn = document.getElementById("logout");
+
+    const friendlyMessages = {
+      NotAuthorizedException: "Invalid email or password.",
+      UserNotFoundException: "Invalid email or password.",
+      PasswordResetRequiredException: "Password reset required. Contact an administrator.",
+      UserNotConfirmedException: "Account not confirmed. Check your email for the activation link.",
+      TooManyRequestsException: "Too many attempts. Please wait and try again.",
+      InternalErrorException: "Authentication service is unavailable. Try again shortly.",
+      InvalidPasswordException: "New password does not meet the security requirements.",
+      InvalidParameterException: "The provided value is not valid. Check the details and try again."
     };
 
-    const formatDate = (iso) => {
-      if (!iso) return '—';
+    let authState = null;
+    let pendingChallenge = null;
+    let nextCursor = null;
+    let loading = false;
+    let refreshPromise = null;
+
+    function setStatus(message, variant) {
+      statusEl.textContent = message || "";
+      if (variant) {
+        statusEl.dataset.variant = variant;
+      } else {
+        delete statusEl.dataset.variant;
+      }
+    }
+
+    function setLoginStatus(message, variant) {
+      loginStatusEl.textContent = message || "";
+      if (variant) {
+        loginStatusEl.dataset.variant = variant;
+      } else {
+        delete loginStatusEl.dataset.variant;
+      }
+    }
+
+    function exitNewPasswordMode(options) {
+      pendingChallenge = null;
+      if (loginForm) {
+        loginForm.dataset.mode = "login";
+      }
+      if (loginFields) {
+        loginFields.hidden = false;
+      }
+      if (newPasswordFields) {
+        newPasswordFields.hidden = true;
+      }
+      if (usernameInput) {
+        usernameInput.disabled = false;
+      }
+      if (passwordInput) {
+        passwordInput.disabled = false;
+        if (options && options.clearPassword) {
+          passwordInput.value = "";
+        }
+      }
+      if (newPasswordInput) {
+        newPasswordInput.value = "";
+      }
+      if (confirmPasswordInput) {
+        confirmPasswordInput.value = "";
+      }
+      if (loginButton) {
+        loginButton.textContent = "Sign in";
+        loginButton.removeAttribute("aria-busy");
+        loginButton.disabled = false;
+      }
+    }
+
+    function enterNewPasswordMode(challenge) {
+      pendingChallenge = challenge;
+      if (loginForm) {
+        loginForm.dataset.mode = "new-password";
+      }
+      if (loginFields) {
+        loginFields.hidden = true;
+      }
+      if (newPasswordFields) {
+        newPasswordFields.hidden = false;
+      }
+      if (usernameInput) {
+        usernameInput.disabled = true;
+      }
+      if (passwordInput) {
+        passwordInput.disabled = true;
+        passwordInput.value = "";
+      }
+      if (loginButton) {
+        loginButton.textContent = "Set new password";
+      }
+      if (newPasswordInput) {
+        newPasswordInput.value = "";
+        if (typeof newPasswordInput.focus === "function") {
+          newPasswordInput.focus();
+        }
+      }
+      if (confirmPasswordInput) {
+        confirmPasswordInput.value = "";
+      }
+      setLoginStatus("Your account requires a new password. Please create one below.");
+    }
+
+    function formatDate(iso) {
+      if (!iso) {
+        return "—";
+      }
       try {
         return new Date(iso).toLocaleString();
       } catch (error) {
         return iso;
       }
-    };
+    }
 
-    const renderReportCard = (report) => {
-      const card = document.createElement('article');
-      card.className = 'card';
+    function formatLocation(location) {
+      if (!location || (location.latitude == null && location.longitude == null)) {
+        return "Not attached";
+      }
+      function formatCoordinate(value) {
+        if (typeof value === "number" && isFinite(value)) {
+          return value.toFixed(5);
+        }
+        if (typeof value === "string" && value.trim() !== "") {
+          return value;
+        }
+        return "";
+      }
+      const latitude = formatCoordinate(location.latitude);
+      const longitude = formatCoordinate(location.longitude);
+      if (!latitude && !longitude) {
+        return "Not attached";
+      }
+      return latitude + ", " + longitude;
+    }
 
-      const title = document.createElement('h2');
-      title.textContent = `Report $${report.report_id || 'Unknown'}`;
+    function createMetaRow(label, value) {
+      const span = document.createElement("span");
+      const strong = document.createElement("strong");
+      strong.textContent = label;
+      span.appendChild(strong);
+      const displayValue = value === undefined || value === null || value === "" ? "—" : value;
+      span.appendChild(document.createTextNode(" " + displayValue));
+      return span;
+    }
+
+    function renderReportCard(report) {
+      const card = document.createElement("article");
+      card.className = "card";
+
+      const title = document.createElement("h2");
+      title.textContent = "Report " + (report && report.report_id ? report.report_id : "Unknown");
       card.appendChild(title);
 
-      const meta = document.createElement('div');
-      meta.className = 'meta';
-      meta.innerHTML = `
-        <span><strong>Submitted</strong> $${formatDate(report.submitted_at)}</span>
-        <span><strong>Status</strong> $${report.status || 'PENDING_REVIEW'}</span>
-        <span><strong>Filename</strong> $${report.filename || '—'}</span>
-        <span><strong>Location</strong> $${report.location ? `$${report.location.latitude?.toFixed?.(5) ?? report.location.latitude}, $${report.location.longitude?.toFixed?.(5) ?? report.location.longitude}` : 'Not attached'}</span>
-        $${report.location && typeof report.location.accuracy_m === 'number' ? `<span><strong>Accuracy</strong> ±$${report.location.accuracy_m} m</span>` : ''}
-      `;
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.appendChild(createMetaRow("Submitted", formatDate(report && report.submitted_at)));
+      meta.appendChild(createMetaRow("Status", report && report.status ? report.status : "PENDING_REVIEW"));
+      meta.appendChild(createMetaRow("Filename", report && report.filename ? report.filename : "—"));
+      meta.appendChild(createMetaRow("Location", formatLocation(report ? report.location : null)));
+      if (report && report.location && typeof report.location.accuracy_m === "number") {
+        meta.appendChild(createMetaRow("Accuracy", "±" + report.location.accuracy_m + " m"));
+      }
       card.appendChild(meta);
 
-      if (report.notes) {
-        const notes = document.createElement('div');
-        notes.className = 'notes';
+      if (report && report.notes) {
+        const notes = document.createElement("div");
+        notes.className = "notes";
         notes.textContent = report.notes;
         card.appendChild(notes);
       }
 
-      const preview = document.createElement('div');
-      preview.className = 'preview';
-      if (report.image_url) {
-        const img = document.createElement('img');
+      const preview = document.createElement("div");
+      preview.className = "preview";
+      if (report && report.image_url) {
+        const img = document.createElement("img");
         img.src = report.image_url;
-        img.alt = `Evidence for report $${report.report_id}`;
-        img.loading = 'lazy';
+        img.alt = "Evidence for report " + (report.report_id || "");
+        img.loading = "lazy";
         preview.appendChild(img);
       } else {
-        preview.textContent = 'No preview available';
+        preview.textContent = "No preview available";
       }
       card.appendChild(preview);
 
       return card;
-    };
+    }
 
-    const clearResults = () => {
-      resultsEl.innerHTML = '';
+    function clearResults() {
+      resultsEl.innerHTML = "";
       emptyStateEl.hidden = true;
       nextCursor = null;
-    };
+      loadMoreBtn.disabled = true;
+    }
 
-    const setLoading = (state) => {
+    function setLoading(state) {
       loading = state;
       if (state) {
-        resultsEl.setAttribute('aria-busy', 'true');
+        resultsEl.setAttribute("aria-busy", "true");
       } else {
-        resultsEl.removeAttribute('aria-busy');
+        resultsEl.removeAttribute("aria-busy");
       }
-      refreshBtn.disabled = state;
-      loadMoreBtn.disabled = state || !nextCursor;
-    };
+      const isAuthenticated = Boolean(authState);
+      refreshBtn.disabled = state || !isAuthenticated;
+      loadMoreBtn.disabled = state || !isAuthenticated || !nextCursor;
+    }
 
-    const fetchReports = async (options = {}) => {
-      if (loading) return;
+    function loadStoredAuth() {
+      try {
+        const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
+        if (!raw) {
+          return null;
+        }
+        const parsed = JSON.parse(raw);
+        if (!parsed || typeof parsed !== "object") {
+          return null;
+        }
+        if (!parsed.idToken) {
+          return null;
+        }
+        return {
+          idToken: parsed.idToken,
+          accessToken: parsed.accessToken || "",
+          refreshToken: parsed.refreshToken || null,
+          expiresAt: typeof parsed.expiresAt === "number" ? parsed.expiresAt : 0
+        };
+      } catch (error) {
+        console.warn("Unable to restore authentication state", error);
+        return null;
+      }
+    }
+
+    function persistAuth(state) {
+      try {
+        if (!state) {
+          window.localStorage.removeItem(AUTH_STORAGE_KEY);
+        } else {
+          window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(state));
+        }
+      } catch (error) {
+        console.warn("Unable to persist authentication state", error);
+      }
+    }
+
+    function isTokenValid(state) {
+      if (!state || !state.idToken || !state.expiresAt) {
+        return false;
+      }
+      return state.expiresAt - TOKEN_EXPIRY_BUFFER_MS > Date.now();
+    }
+
+    function setAuthState(state) {
+      if (state) {
+        exitNewPasswordMode();
+        const normalized = {
+          idToken: state.idToken,
+          accessToken: state.accessToken || "",
+          refreshToken: state.refreshToken || null,
+          expiresAt: typeof state.expiresAt === "number" ? state.expiresAt : Date.now()
+        };
+        authState = normalized;
+        persistAuth(normalized);
+        document.body.dataset.auth = "authenticated";
+        if (loginView) {
+          loginView.hidden = true;
+          loginView.style.display = "none";
+          loginView.setAttribute("aria-hidden", "true");
+        }
+        if (appView) {
+          appView.hidden = false;
+          appView.style.display = "flex";
+          appView.setAttribute("aria-hidden", "false");
+        }
+        refreshBtn.disabled = loading;
+        loadMoreBtn.disabled = loading || !nextCursor;
+        return authState;
+      }
+      authState = null;
+      persistAuth(null);
+      document.body.dataset.auth = "anonymous";
+      if (appView) {
+        appView.hidden = true;
+        appView.style.display = "none";
+        appView.setAttribute("aria-hidden", "true");
+      }
+      if (loginView) {
+        loginView.hidden = false;
+        loginView.style.display = "flex";
+        loginView.setAttribute("aria-hidden", "false");
+      }
+      exitNewPasswordMode({ clearPassword: true });
+      refreshBtn.disabled = true;
+      loadMoreBtn.disabled = true;
+      clearResults();
+      setStatus("");
+      return null;
+    }
+
+    function signOut(message, variant) {
+      setAuthState(null);
+      if (message) {
+        setLoginStatus(message, variant);
+      } else {
+        setLoginStatus("Signed out. Please sign in to continue.");
+      }
+    }
+
+    function buildAuthState(result, fallbackRefreshToken) {
+      if (!result || !result.IdToken) {
+        throw new Error("Invalid authentication response.");
+      }
+      const expiresIn = Number(result.ExpiresIn) || 3600;
+      return {
+        idToken: result.IdToken,
+        accessToken: result.AccessToken || "",
+        refreshToken: result.RefreshToken || fallbackRefreshToken || null,
+        expiresAt: Date.now() + Math.max(expiresIn, 0) * 1000
+      };
+    }
+
+    function getFriendlyMessage(code, fallback) {
+      if (code && friendlyMessages[code]) {
+        return friendlyMessages[code];
+      }
+      if (fallback) {
+        return fallback;
+      }
+      return "Unable to sign in right now. Please try again.";
+    }
+
+    async function initiateAuth(payload) {
+      const response = await fetch(COGNITO_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-amz-json-1.1",
+          "X-Amz-Target": "AWSCognitoIdentityProviderService.InitiateAuth"
+        },
+        body: JSON.stringify(payload)
+      });
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (error) {
+        data = null;
+      }
+      if (!response.ok) {
+        const rawCode = data && (data.__type || data.code) ? String(data.__type || data.code) : "";
+        const code = rawCode.indexOf("#") >= 0 ? rawCode.split("#").pop() : (rawCode || "UnknownError");
+        const message = data && (data.message || data.Message) ? data.message || data.Message : "Unable to complete authentication.";
+        const err = new Error(message);
+        err.code = code;
+        err.status = response.status;
+        throw err;
+      }
+      return data;
+    }
+
+    async function respondToAuthChallenge(payload) {
+      const response = await fetch(COGNITO_ENDPOINT, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-amz-json-1.1",
+          "X-Amz-Target": "AWSCognitoIdentityProviderService.RespondToAuthChallenge"
+        },
+        body: JSON.stringify(payload)
+      });
+      let data = null;
+      try {
+        data = await response.json();
+      } catch (error) {
+        data = null;
+      }
+      if (!response.ok) {
+        const rawCode = data && (data.__type || data.code) ? String(data.__type || data.code) : "";
+        const code = rawCode.indexOf("#") >= 0 ? rawCode.split("#").pop() : (rawCode || "UnknownError");
+        const message = data && (data.message || data.Message) ? data.message || data.Message : "Unable to complete authentication.";
+        const err = new Error(message);
+        err.code = code;
+        err.status = response.status;
+        throw err;
+      }
+      return data;
+    }
+
+    async function refreshAuth() {
+      if (!authState || !authState.refreshToken) {
+        const err = new Error("not_authenticated");
+        err.code = "not_authenticated";
+        throw err;
+      }
+      if (refreshPromise) {
+        return refreshPromise;
+      }
+      refreshPromise = (async function () {
+        const response = await initiateAuth({
+          AuthFlow: "REFRESH_TOKEN_AUTH",
+          ClientId: COGNITO_CLIENT_ID,
+          AuthParameters: {
+            REFRESH_TOKEN: authState.refreshToken
+          }
+        });
+        if (!response || !response.AuthenticationResult) {
+          throw new Error("Failed to refresh session.");
+        }
+        const refreshed = buildAuthState(response.AuthenticationResult, authState.refreshToken);
+        setAuthState(refreshed);
+        return refreshed;
+      })().catch(function (error) {
+        console.error("Failed to refresh token", error);
+        signOut("Session expired. Please sign in again.", "error");
+        const err = new Error("not_authenticated");
+        err.code = "not_authenticated";
+        throw err;
+      }).finally(function () {
+        refreshPromise = null;
+      });
+      return refreshPromise;
+    }
+
+    async function ensureAuthenticated() {
+      if (authState && isTokenValid(authState)) {
+        return authState;
+      }
+      if (authState && authState.refreshToken) {
+        try {
+          return await refreshAuth();
+        } catch (error) {
+          const err = new Error("not_authenticated");
+          err.code = "not_authenticated";
+          throw err;
+        }
+      }
+      const err = new Error("not_authenticated");
+      err.code = "not_authenticated";
+      throw err;
+    }
+
+    async function handleNewPasswordSubmission() {
+      if (!pendingChallenge || pendingChallenge.name !== "NEW_PASSWORD_REQUIRED") {
+        exitNewPasswordMode({ clearPassword: true });
+        setLoginStatus("Session expired. Please sign in again.", "error");
+        return;
+      }
+      const newPassword = (newPasswordInput && typeof newPasswordInput.value === "string" ? newPasswordInput.value.trim() : "");
+      const confirmPassword = (confirmPasswordInput && typeof confirmPasswordInput.value === "string" ? confirmPasswordInput.value.trim() : "");
+      if (!newPassword) {
+        setLoginStatus("Enter a new password to continue.", "error");
+        if (newPasswordInput && typeof newPasswordInput.focus === "function") {
+          newPasswordInput.focus();
+        }
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setLoginStatus("Passwords do not match.", "error");
+        if (confirmPasswordInput) {
+          confirmPasswordInput.value = "";
+          if (typeof confirmPasswordInput.focus === "function") {
+            confirmPasswordInput.focus();
+          }
+        }
+        return;
+      }
+
+      const originalText = loginButton.textContent;
+      loginButton.disabled = true;
+      loginButton.textContent = "Updating…";
+      loginButton.setAttribute("aria-busy", "true");
+      setLoginStatus("Updating your password…");
+
+      try {
+        const userIdentifier = (pendingChallenge.parameters && pendingChallenge.parameters.USER_ID_FOR_SRP) || pendingChallenge.username;
+        const challengePayload = {
+          ChallengeName: "NEW_PASSWORD_REQUIRED",
+          ClientId: COGNITO_CLIENT_ID,
+          Session: pendingChallenge.session,
+          ChallengeResponses: {
+            USERNAME: userIdentifier,
+            NEW_PASSWORD: newPassword
+          }
+        };
+        const response = await respondToAuthChallenge(challengePayload);
+        if (response.ChallengeName) {
+          setLoginStatus("Additional verification is required. Please contact an administrator.", "error");
+          exitNewPasswordMode({ clearPassword: true });
+          return;
+        }
+        if (!response.AuthenticationResult) {
+          throw new Error("Authentication failed after password update.");
+        }
+        exitNewPasswordMode({ clearPassword: true });
+        const newState = buildAuthState(response.AuthenticationResult);
+        setLoginStatus("");
+        setAuthState(newState);
+        await fetchReports({ reset: true });
+      } catch (error) {
+        console.error("Failed to set new password", error);
+        const message = getFriendlyMessage(error && error.code, error && error.message);
+        setLoginStatus(message, "error");
+        if (newPasswordInput) {
+          newPasswordInput.value = "";
+          if (typeof newPasswordInput.focus === "function") {
+            newPasswordInput.focus();
+          }
+        }
+        if (confirmPasswordInput) {
+          confirmPasswordInput.value = "";
+        }
+      } finally {
+        loginButton.disabled = false;
+        if (loginForm && loginForm.dataset.mode === "new-password") {
+          loginButton.textContent = originalText;
+        }
+        loginButton.removeAttribute("aria-busy");
+      }
+    }
+
+    async function fetchReports(options) {
+      if (loading) {
+        return;
+      }
+      const config = options || {};
+      let auth = null;
+      try {
+        auth = await ensureAuthenticated();
+      } catch (error) {
+        if (error && error.code === "not_authenticated") {
+          setStatus("");
+          setLoginStatus("Sign in with your officer credentials to view reports.");
+          return;
+        }
+        console.error(error);
+        setStatus("Unable to verify your session. Please sign in again.", "error");
+        return;
+      }
+
       setLoading(true);
-      const { reset = false } = options;
+      const reset = Boolean(config.reset);
       if (reset) {
         clearResults();
-        setStatus('Fetching latest reports…');
+        setStatus("Fetching latest reports…");
       } else {
-        setStatus('Loading more reports…');
+        setStatus("Loading more reports…");
       }
 
-      const params = new URLSearchParams({ limit: '24' });
+      const params = new URLSearchParams({ limit: "24" });
       if (!reset && nextCursor) {
-        params.set('cursor', nextCursor);
+        params.set("cursor", nextCursor);
       }
 
       try {
-        const response = await fetch(`$${API_BASE_URL}/reports?$${params.toString()}`);
-        if (!response.ok) {
-          throw new Error(`HTTP $${response.status}`);
+        const response = await fetch(API_BASE_URL + "/reports?" + params.toString(), {
+          headers: {
+            Authorization: "Bearer " + auth.idToken
+          }
+        });
+
+        if (response.status === 401 || response.status === 403) {
+          console.warn("Authenticated request rejected with", response.status);
+          setStatus("Unable to load reports with the current session. Please refresh later or contact an administrator.", "error");
+          return;
         }
+
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
+
         const data = await response.json();
         const items = Array.isArray(data.items) ? data.items : [];
 
         if (reset) {
-          resultsEl.innerHTML = '';
+          resultsEl.innerHTML = "";
         }
 
         if (items.length === 0 && resultsEl.children.length === 0) {
@@ -338,30 +1070,162 @@
           emptyStateEl.hidden = true;
         }
 
-        items.forEach((item) => {
+        items.forEach(function (item) {
           const card = renderReportCard(item);
           resultsEl.appendChild(card);
         });
 
         nextCursor = data.next_cursor || null;
         loadMoreBtn.disabled = !nextCursor;
+
+        const count = resultsEl.children.length;
         if (nextCursor) {
-          setStatus(`Showing $${resultsEl.children.length} report$${resultsEl.children.length === 1 ? '' : 's'} (more available)…`);
+          setStatus("Showing " + count + " report" + (count === 1 ? "" : "s") + " (more available)…");
         } else {
-          setStatus(`Showing $${resultsEl.children.length} report$${resultsEl.children.length === 1 ? '' : 's'}.`);
+          setStatus("Showing " + count + " report" + (count === 1 ? "" : "s") + ".");
         }
       } catch (error) {
         console.error(error);
-        setStatus('Unable to load reports right now. Please retry in a moment.', 'error');
+        setStatus("Unable to load reports right now. Please retry in a moment.", "error");
       } finally {
         setLoading(false);
       }
-    };
+    }
 
-    refreshBtn.addEventListener('click', () => fetchReports({ reset: true }));
-    loadMoreBtn.addEventListener('click', () => fetchReports({ reset: false }));
+    if (refreshBtn) {
+      refreshBtn.addEventListener("click", function () {
+        fetchReports({ reset: true });
+      });
+    }
 
-    fetchReports({ reset: true });
+    if (loadMoreBtn) {
+      loadMoreBtn.addEventListener("click", function () {
+        fetchReports({ reset: false });
+      });
+    }
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", function () {
+        signOut("You have signed out.");
+      });
+    }
+
+    if (loginForm) {
+      loginForm.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        if (pendingChallenge && pendingChallenge.name === "NEW_PASSWORD_REQUIRED") {
+          await handleNewPasswordSubmission();
+          return;
+        }
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value;
+        if (!username || !password) {
+          setLoginStatus("Enter your email and password to continue.", "error");
+          return;
+        }
+
+        const originalText = loginButton.textContent;
+        loginButton.disabled = true;
+        loginButton.textContent = "Signing in…";
+        loginButton.setAttribute("aria-busy", "true");
+        setLoginStatus("Signing you in…");
+
+        try {
+          const response = await initiateAuth({
+            AuthFlow: "USER_PASSWORD_AUTH",
+            ClientId: COGNITO_CLIENT_ID,
+            AuthParameters: {
+              USERNAME: username,
+              PASSWORD: password
+            }
+          });
+
+          if (response.ChallengeName === "NEW_PASSWORD_REQUIRED") {
+            enterNewPasswordMode({
+              name: response.ChallengeName,
+              session: response.Session,
+              parameters: response.ChallengeParameters || {},
+              username: username
+            });
+            return;
+          }
+
+          if (response.ChallengeName) {
+            const err = new Error("Unsupported authentication challenge: " + response.ChallengeName);
+            err.code = response.ChallengeName;
+            throw err;
+          }
+
+          if (!response.AuthenticationResult) {
+            throw new Error("Authentication failed. Please try again.");
+          }
+
+          const newState = buildAuthState(response.AuthenticationResult);
+          setAuthState(newState);
+          setLoginStatus("");
+          passwordInput.value = "";
+          await fetchReports({ reset: true });
+        } catch (error) {
+          console.error("Login failed", error);
+          let message = "";
+          if (error && error.name === "TypeError" && !error.code) {
+            message = "Unable to reach the authentication service. Check your connection and try again.";
+          } else {
+            message = getFriendlyMessage(error && error.code, error && error.message);
+          }
+          setLoginStatus(message, "error");
+          passwordInput.value = "";
+          if (typeof passwordInput.focus === "function") {
+            passwordInput.focus();
+          }
+        } finally {
+          loginButton.disabled = false;
+          if (loginForm && loginForm.dataset.mode === "new-password") {
+            loginButton.textContent = "Set new password";
+          } else {
+            loginButton.textContent = originalText;
+          }
+          loginButton.removeAttribute("aria-busy");
+        }
+      });
+    }
+
+    if (cancelNewPasswordBtn) {
+      cancelNewPasswordBtn.addEventListener("click", function () {
+        exitNewPasswordMode({ clearPassword: true });
+        if (usernameInput) {
+          usernameInput.value = "";
+          if (typeof usernameInput.focus === "function") {
+            usernameInput.focus();
+          }
+        }
+        if (passwordInput) {
+          passwordInput.value = "";
+        }
+        setLoginStatus("Sign in with your officer credentials to access the admin portal.");
+      });
+    }
+
+    const restoredAuth = loadStoredAuth();
+    if (restoredAuth) {
+      setAuthState(restoredAuth);
+      if (isTokenValid(authState)) {
+        fetchReports({ reset: true });
+      } else if (authState && authState.refreshToken) {
+        setLoginStatus("Restoring your session…");
+        refreshAuth().then(function () {
+          setLoginStatus("");
+          fetchReports({ reset: true });
+        }).catch(function () {
+          // refreshAuth already handled sign-out messaging
+        });
+      } else {
+        signOut("Session expired. Please sign in again.", "error");
+      }
+    } else {
+      setAuthState(null);
+      setLoginStatus("Sign in with your officer credentials to access the admin portal.");
+    }
   </script>
 </body>
 </html>

@@ -150,6 +150,9 @@ resource "aws_s3_bucket_policy" "image_submission_portal" {
       }
     ]
   })
+  depends_on = [
+    aws_s3_bucket_public_access_block.image_submission_portal
+  ]
 }
 
 resource "aws_s3_object" "image_submission_portal_index" {
@@ -290,6 +293,9 @@ resource "aws_s3_bucket_policy" "officer_admin_portal" {
       }
     ]
   })
+  depends_on = [
+    aws_s3_bucket_public_access_block.officer_admin_portal
+  ]
 }
 
 resource "aws_s3_object" "officer_admin_portal_index" {
@@ -297,7 +303,9 @@ resource "aws_s3_object" "officer_admin_portal_index" {
   key          = "index.html"
   content_type = "text/html"
   content = templatefile("${path.module}/officer-admin-portal/index.html.tmpl", {
-    api_base_url = "${aws_apigatewayv2_api.http.api_endpoint}/${aws_apigatewayv2_stage.http.name}"
+    api_base_url      = "${aws_apigatewayv2_api.http.api_endpoint}/${aws_apigatewayv2_stage.http.name}"
+    cognito_client_id = aws_cognito_user_pool_client.officers.id
+    cognito_region    = var.region
   })
 }
 
@@ -423,9 +431,12 @@ resource "aws_cognito_user_pool" "officers" {
 }
 
 resource "aws_cognito_user_pool_client" "officers" {
-  name            = "vapewatch-officers-client-${var.env}"
-  user_pool_id    = aws_cognito_user_pool.officers.id
-  generate_secret = false
+  name                         = "vapewatch-officers-client-${var.env}"
+  user_pool_id                 = aws_cognito_user_pool.officers.id
+  generate_secret              = false
+  explicit_auth_flows          = ["ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
+  prevent_user_existence_errors = "ENABLED"
+  supported_identity_providers = ["COGNITO"]
 }
 
 # ----------------------
@@ -471,6 +482,7 @@ data "aws_iam_policy_document" "lambda_inline" {
       "dynamodb:PutItem",
       "dynamodb:GetItem",
       "dynamodb:UpdateItem",
+      "dynamodb:Scan",
       "dynamodb:DescribeStream",
       "dynamodb:GetRecords",
       "dynamodb:GetShardIterator",
@@ -732,7 +744,7 @@ resource "aws_apigatewayv2_api" "http" {
   cors_configuration {
     allow_origins = ["*"]
     allow_methods = ["OPTIONS", "POST", "GET"]
-    allow_headers = ["content-type"]
+    allow_headers = ["content-type", "authorization"]
   }
 }
 
@@ -756,10 +768,24 @@ resource "aws_apigatewayv2_integration" "officer_reports" {
   payload_format_version = "2.0"
 }
 
+resource "aws_apigatewayv2_authorizer" "officer_jwt" {
+  api_id           = aws_apigatewayv2_api.http.id
+  authorizer_type  = "JWT"
+  identity_sources = ["$request.header.Authorization"]
+  name             = "officer-jwt"
+
+  jwt_configuration {
+    audience = [aws_cognito_user_pool_client.officers.id]
+    issuer   = "https://cognito-idp.${var.region}.amazonaws.com/${aws_cognito_user_pool.officers.id}"
+  }
+}
+
 resource "aws_apigatewayv2_route" "reports_list" {
-  api_id    = aws_apigatewayv2_api.http.id
-  route_key = "GET /reports"
-  target    = "integrations/${aws_apigatewayv2_integration.officer_reports.id}"
+  api_id             = aws_apigatewayv2_api.http.id
+  route_key          = "GET /reports"
+  target             = "integrations/${aws_apigatewayv2_integration.officer_reports.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.officer_jwt.id
 }
 
 resource "aws_lambda_permission" "api_invoke_ingest" {
