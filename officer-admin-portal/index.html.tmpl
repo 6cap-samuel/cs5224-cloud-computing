@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>VapeWatch Officer Admin Portal</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
   <style>
     :root {
       --background: #0f172a;
@@ -284,6 +285,79 @@
       gap: 1.25rem;
     }
 
+    .map-panel {
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1rem 1.25rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      min-height: 360px;
+    }
+
+    .map-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .map-toolbar h2 {
+      margin: 0;
+      font-size: 1rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .map-status {
+      flex: 1;
+      text-align: right;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .map-status[data-variant="warning"] {
+      color: #fbbf24;
+    }
+
+    .map-canvas {
+      border-radius: 14px;
+      overflow: hidden;
+      min-height: 320px;
+      height: 360px;
+    }
+
+    #reports-map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .map-popup {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      min-width: 180px;
+      max-width: 240px;
+    }
+
+    .map-popup-title {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+    }
+
+    .map-popup-meta {
+      font-size: 0.83rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .map-popup img {
+      width: 100%;
+      border-radius: 8px;
+    }
+
     .card {
       background: var(--panel-bg);
       border: 1px solid var(--border);
@@ -380,6 +454,15 @@
         width: 100%;
         text-align: center;
       }
+
+      .map-panel {
+        padding: 1rem;
+      }
+
+      .map-canvas {
+        height: 300px;
+        min-height: 260px;
+      }
     }
 
     @media (max-width: 640px) {
@@ -457,11 +540,21 @@
         </div>
         <div id="status" class="status" role="status" aria-live="polite"></div>
       </div>
+      <div class="map-panel" aria-labelledby="map-title">
+        <div class="map-toolbar">
+          <h2 id="map-title">Report map</h2>
+          <div id="map-status" class="map-status" role="status" aria-live="polite"></div>
+        </div>
+        <div class="map-canvas">
+          <div id="reports-map" role="img" aria-label="Map showing report locations"></div>
+        </div>
+      </div>
       <section id="results" class="grid" aria-live="polite" aria-busy="false"></section>
       <div id="empty-state" class="empty" hidden>No reports available yet. Submissions will appear here automatically.</div>
     </section>
   </main>
   <footer>Restricted access: For authorised VapeWatch officers only.</footer>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script>
     const API_BASE_URL = "${api_base_url}";
     const COGNITO_CLIENT_ID = "${cognito_client_id}";
@@ -493,6 +586,11 @@
     const refreshBtn = document.getElementById("refresh");
     const loadMoreBtn = document.getElementById("load-more");
     const logoutBtn = document.getElementById("logout");
+    const mapStatusEl = document.getElementById("map-status");
+    const mapCanvasEl = document.getElementById("reports-map");
+
+    const MAP_DEFAULT_CENTER = [0, 0];
+    const MAP_DEFAULT_ZOOM = 2;
 
     const friendlyMessages = {
       NotAuthorizedException: "Invalid email or password.",
@@ -510,6 +608,10 @@
     let nextCursor = null;
     let loading = false;
     let refreshPromise = null;
+    let mapInstance = null;
+    let mapMarkersLayer = null;
+    let mapBounds = null;
+    const mapMarkerRefs = new Map();
 
     function setStatus(message, variant) {
       statusEl.textContent = message || "";
@@ -517,6 +619,18 @@
         statusEl.dataset.variant = variant;
       } else {
         delete statusEl.dataset.variant;
+      }
+    }
+
+    function setMapStatus(message, variant) {
+      if (!mapStatusEl) {
+        return;
+      }
+      mapStatusEl.textContent = message || "";
+      if (variant) {
+        mapStatusEl.dataset.variant = variant;
+      } else {
+        delete mapStatusEl.dataset.variant;
       }
     }
 
@@ -627,6 +741,160 @@
       return latitude + ", " + longitude;
     }
 
+    function ensureMap() {
+      if (!mapCanvasEl) {
+        return null;
+      }
+      if (typeof L === "undefined") {
+        setMapStatus("Map library failed to load.", "warning");
+        return null;
+      }
+      if (!mapInstance) {
+        mapInstance = L.map(mapCanvasEl, {
+          zoomSnap: 0.25,
+          zoomDelta: 0.5,
+          worldCopyJump: true,
+          attributionControl: true
+        });
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          maxZoom: 19,
+          attribution: "© OpenStreetMap contributors"
+        }).addTo(mapInstance);
+        mapMarkersLayer = L.layerGroup().addTo(mapInstance);
+        mapBounds = null;
+        mapInstance.setView(MAP_DEFAULT_CENTER, MAP_DEFAULT_ZOOM);
+        setTimeout(function () {
+          if (mapInstance) {
+            mapInstance.invalidateSize();
+          }
+        }, 120);
+      }
+      return mapInstance;
+    }
+
+    function clearMapMarkers() {
+      if (mapMarkersLayer) {
+        mapMarkersLayer.clearLayers();
+      }
+      mapMarkerRefs.clear();
+      mapBounds = null;
+      if (mapInstance) {
+        mapInstance.setView(MAP_DEFAULT_CENTER, MAP_DEFAULT_ZOOM);
+      }
+      if (document.body.dataset.auth === "authenticated") {
+        setMapStatus("No mapped reports yet.");
+      } else {
+        setMapStatus("Sign in to view mapped reports.");
+      }
+    }
+
+    function parseCoordinate(value) {
+      if (typeof value === "number") {
+        return Number.isFinite(value) ? value : null;
+      }
+      if (typeof value === "string") {
+        const parsed = parseFloat(value);
+        if (Number.isFinite(parsed)) {
+          return parsed;
+        }
+      }
+      return null;
+    }
+
+    function buildMapPopup(report) {
+      const container = document.createElement("div");
+      container.className = "map-popup";
+
+      const title = document.createElement("div");
+      title.className = "map-popup-title";
+      title.textContent = "Report " + (report.report_id || "Unknown");
+      container.appendChild(title);
+
+      const metaLines = [];
+      const submitted = report && report.submitted_at ? formatDate(report.submitted_at) : null;
+      if (submitted) {
+        metaLines.push(submitted);
+      }
+      metaLines.push(report && report.status ? report.status : "PENDING_REVIEW");
+      const locationText = formatLocation(report ? report.location : null);
+      if (locationText && locationText !== "Not attached") {
+        metaLines.push(locationText);
+      }
+
+      const meta = document.createElement("div");
+      meta.className = "map-popup-meta";
+      meta.textContent = metaLines.join(" • ");
+      container.appendChild(meta);
+
+      if (report && report.image_url) {
+        const img = document.createElement("img");
+        img.src = report.image_url;
+        img.alt = "Evidence for report " + (report.report_id || "");
+        img.loading = "lazy";
+        container.appendChild(img);
+      }
+
+      if (report && report.notes) {
+        const notes = document.createElement("div");
+        notes.className = "map-popup-meta";
+        notes.textContent = report.notes;
+        container.appendChild(notes);
+      }
+
+      return container;
+    }
+
+    function plotReportOnMap(report) {
+      if (!report || !report.location || !report.image_url) {
+        return false;
+      }
+      const lat = parseCoordinate(report.location.latitude);
+      const lng = parseCoordinate(report.location.longitude);
+      if (lat === null || lng === null) {
+        return false;
+      }
+      const map = ensureMap();
+      if (!map || !mapMarkersLayer) {
+        return false;
+      }
+      const key = report.report_id ? String(report.report_id) : [lat.toFixed(5), lng.toFixed(5), report.submitted_at || ""].join(":");
+      if (mapMarkerRefs.has(key)) {
+        const existingMarker = mapMarkerRefs.get(key);
+        if (existingMarker) {
+          mapMarkersLayer.removeLayer(existingMarker);
+        }
+        mapMarkerRefs.delete(key);
+      }
+      const latLng = L.latLng(lat, lng);
+      const marker = L.marker(latLng);
+      marker.bindPopup(buildMapPopup(report));
+      mapMarkersLayer.addLayer(marker);
+      mapMarkerRefs.set(key, marker);
+      if (!mapBounds) {
+        mapBounds = L.latLngBounds(latLng, latLng);
+      } else {
+        mapBounds.extend(latLng);
+      }
+      return true;
+    }
+
+    function updateMapAfterData(options) {
+      const map = ensureMap();
+      if (!map || !mapMarkersLayer) {
+        return;
+      }
+      map.invalidateSize();
+      const markerCount = mapMarkersLayer.getLayers().length;
+      if (markerCount === 0) {
+        setMapStatus("No mapped reports yet.");
+      } else {
+        setMapStatus("Showing " + markerCount + " mapped report" + (markerCount === 1 ? "" : "s") + ".");
+      }
+      if (options && options.refit && mapBounds) {
+        map.fitBounds(mapBounds, { padding: [32, 32], maxZoom: 17 });
+      }
+    }
+
     function createMetaRow(label, value) {
       const span = document.createElement("span");
       const strong = document.createElement("strong");
@@ -684,6 +952,15 @@
       emptyStateEl.hidden = true;
       nextCursor = null;
       loadMoreBtn.disabled = true;
+      if (mapInstance || mapMarkersLayer) {
+        clearMapMarkers();
+      } else {
+        if (document.body.dataset.auth === "authenticated") {
+          setMapStatus("No mapped reports yet.");
+        } else {
+          setMapStatus("Sign in to view mapped reports.");
+        }
+      }
     }
 
     function setLoading(state) {
@@ -764,6 +1041,8 @@
           appView.style.display = "flex";
           appView.setAttribute("aria-hidden", "false");
         }
+        ensureMap();
+        setMapStatus("Loading geotagged reports…");
         refreshBtn.disabled = loading;
         loadMoreBtn.disabled = loading || !nextCursor;
         return authState;
@@ -1031,9 +1310,12 @@
       if (reset) {
         clearResults();
         setStatus("Fetching latest reports…");
+        setMapStatus("Loading geotagged reports…");
       } else {
         setStatus("Loading more reports…");
+        setMapStatus("Adding mapped reports…");
       }
+      ensureMap();
 
       const params = new URLSearchParams({ limit: "24" });
       if (!reset && nextCursor) {
@@ -1050,6 +1332,7 @@
         if (response.status === 401 || response.status === 403) {
           console.warn("Authenticated request rejected with", response.status);
           setStatus("Unable to load reports with the current session. Please refresh later or contact an administrator.", "error");
+          setMapStatus("Current session is not authorised to view mapped reports.", "warning");
           return;
         }
 
@@ -1070,9 +1353,13 @@
           emptyStateEl.hidden = true;
         }
 
+        let mappedThisBatch = 0;
         items.forEach(function (item) {
           const card = renderReportCard(item);
           resultsEl.appendChild(card);
+          if (plotReportOnMap(item)) {
+            mappedThisBatch += 1;
+          }
         });
 
         nextCursor = data.next_cursor || null;
@@ -1084,9 +1371,14 @@
         } else {
           setStatus("Showing " + count + " report" + (count === 1 ? "" : "s") + ".");
         }
+        updateMapAfterData({ refit: reset });
+        if (mappedThisBatch === 0 && (!mapMarkersLayer || mapMarkersLayer.getLayers().length === 0)) {
+          setMapStatus("No mapped reports yet.");
+        }
       } catch (error) {
         console.error(error);
         setStatus("Unable to load reports right now. Please retry in a moment.", "error");
+        setMapStatus("Unable to update map with the latest reports.", "warning");
       } finally {
         setLoading(false);
       }
