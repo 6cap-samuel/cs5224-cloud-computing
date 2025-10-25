@@ -375,6 +375,70 @@
       letter-spacing: 0.02em;
     }
 
+    .weather-card {
+      gap: 0.9rem;
+    }
+
+    .weather-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.5rem;
+    }
+
+    .weather-updated {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .weather-status {
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    .weather-validity {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .weather-groups {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .weather-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.75rem;
+    }
+
+    .weather-group h3 {
+      margin: 0;
+      font-size: 0.92rem;
+    }
+
+    .weather-group ul {
+      margin: 0;
+      padding-left: 1rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .weather-group li + li {
+      margin-top: 0.25rem;
+    }
+
+    .weather-more {
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
     .meta {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -402,6 +466,47 @@
       border-radius: 14px;
       padding: 0.75rem;
       border: 1px solid var(--border);
+    }
+
+    .report-weather {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.75rem;
+      font-size: 0.85rem;
+    }
+
+    .report-weather h3 {
+      margin: 0;
+      font-size: 0.9rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .report-weather-status {
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+    }
+
+    .report-weather-meta {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .report-weather-areas {
+      margin: 0;
+      padding-left: 1.1rem;
+      color: var(--text-muted);
+    }
+
+    .report-weather-areas li + li {
+      margin-top: 0.2rem;
     }
 
     .preview {
@@ -540,6 +645,15 @@
         </div>
         <div id="status" class="status" role="status" aria-live="polite"></div>
       </div>
+      <article id="weather-card" class="card weather-card" aria-live="polite">
+        <div class="weather-header">
+          <h2>2-Hour Weather</h2>
+          <span id="weather-updated" class="weather-updated"></span>
+        </div>
+        <p id="weather-status" class="weather-status">Loading latest forecast…</p>
+        <p id="weather-validity" class="weather-validity"></p>
+        <div id="weather-groups" class="weather-groups" aria-live="polite" aria-busy="true"></div>
+      </article>
       <div class="map-panel" aria-labelledby="map-title">
         <div class="map-toolbar">
           <h2 id="map-title">Report map</h2>
@@ -588,9 +702,16 @@
     const logoutBtn = document.getElementById("logout");
     const mapStatusEl = document.getElementById("map-status");
     const mapCanvasEl = document.getElementById("reports-map");
+    const weatherCardEl = document.getElementById("weather-card");
+    const weatherUpdatedEl = document.getElementById("weather-updated");
+    const weatherStatusEl = document.getElementById("weather-status");
+    const weatherValidityEl = document.getElementById("weather-validity");
+    const weatherGroupsEl = document.getElementById("weather-groups");
 
     const MAP_DEFAULT_CENTER = [0, 0];
     const MAP_DEFAULT_ZOOM = 2;
+    const WEATHER_API_URL = "https://api.data.gov.sg/v1/environment/2-hour-weather-forecast";
+    const WEATHER_REFRESH_INTERVAL_MS = 10 * 60 * 1000;
 
     const friendlyMessages = {
       NotAuthorizedException: "Invalid email or password.",
@@ -612,6 +733,7 @@
     let mapMarkersLayer = null;
     let mapBounds = null;
     const mapMarkerRefs = new Map();
+    let weatherRefreshTimer = null;
 
     function setStatus(message, variant) {
       statusEl.textContent = message || "";
@@ -739,6 +861,251 @@
         return "Not attached";
       }
       return latitude + ", " + longitude;
+    }
+
+    function formatWeatherTimestamp(value, options) {
+      if (!value) {
+        return "";
+      }
+      try {
+        return new Date(value).toLocaleString(undefined, options || {
+          weekday: "short",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+      } catch (error) {
+        return value;
+      }
+    }
+
+    function formatWeatherTime(value) {
+      return formatWeatherTimestamp(value, {
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function formatWeatherWindow(start, end) {
+      const startLabel = formatWeatherTime(start);
+      const endLabel = formatWeatherTime(end);
+      if (startLabel && endLabel) {
+        return "Valid " + startLabel + " to " + endLabel;
+      }
+      if (startLabel) {
+        return "Valid from " + startLabel;
+      }
+      if (endLabel) {
+        return "Valid until " + endLabel;
+      }
+      return "";
+    }
+
+    function clearWeatherGroups(options) {
+      if (!weatherGroupsEl) {
+        return;
+      }
+      weatherGroupsEl.innerHTML = "";
+      if (options && options.busy === false) {
+        weatherGroupsEl.setAttribute("aria-busy", "false");
+      } else {
+        weatherGroupsEl.setAttribute("aria-busy", "true");
+      }
+    }
+
+    function resetWeatherCard(message) {
+      if (!weatherCardEl) {
+        return;
+      }
+      if (weatherStatusEl) {
+        weatherStatusEl.textContent = message || "Weather information unavailable.";
+      }
+      if (weatherUpdatedEl) {
+        weatherUpdatedEl.textContent = "";
+      }
+      if (weatherValidityEl) {
+        weatherValidityEl.textContent = "";
+      }
+      clearWeatherGroups({ busy: false });
+      delete weatherCardEl.dataset.weatherLoaded;
+    }
+
+    async function fetchWeather() {
+      if (!weatherCardEl) {
+        return;
+      }
+      if (weatherStatusEl) {
+        if (weatherCardEl.dataset.weatherLoaded === "true") {
+          weatherStatusEl.textContent = "Updating latest forecast…";
+        } else {
+          weatherStatusEl.textContent = "Loading latest forecast…";
+        }
+      }
+      clearWeatherGroups();
+      try {
+        const response = await fetch(WEATHER_API_URL, { cache: "no-store" });
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
+        const payload = await response.json();
+        if (!payload || !Array.isArray(payload.items) || payload.items.length === 0) {
+          resetWeatherCard("Weather forecast is temporarily unavailable.");
+          return;
+        }
+        if (payload.api_info && payload.api_info.status && payload.api_info.status !== "healthy") {
+          resetWeatherCard("Weather service is currently unavailable.");
+          return;
+        }
+        const item = payload.items[0];
+        const forecasts = Array.isArray(item.forecasts) ? item.forecasts : [];
+        if (forecasts.length === 0) {
+          resetWeatherCard("No forecast data provided at the moment.");
+          return;
+        }
+        const areaSet = new Set();
+        const grouped = new Map();
+        forecasts.forEach(function (entry) {
+          if (!entry) {
+            return;
+          }
+          if (entry.area) {
+            areaSet.add(entry.area);
+          }
+          const condition = (entry.forecast || "").trim() || "Unknown";
+          if (!grouped.has(condition)) {
+            grouped.set(condition, new Set());
+          }
+          if (entry.area) {
+            grouped.get(condition).add(entry.area);
+          }
+        });
+        const groupEntries = Array.from(grouped.entries()).map(function (entry) {
+          const condition = entry[0];
+          const areas = Array.from(entry[1]).sort(function (a, b) {
+            return a.localeCompare(b);
+          });
+          return {
+            condition: condition,
+            areas: areas
+          };
+        }).sort(function (a, b) {
+          if (b.areas.length === a.areas.length) {
+            return a.condition.localeCompare(b.condition);
+          }
+          return b.areas.length - a.areas.length;
+        });
+        const totalAreas = areaSet.size;
+        if (weatherUpdatedEl) {
+          weatherUpdatedEl.textContent = item.update_timestamp ? "Updated " + formatWeatherTimestamp(item.update_timestamp) : "";
+        }
+        if (weatherValidityEl) {
+          weatherValidityEl.textContent = item.valid_period ? formatWeatherWindow(item.valid_period.start, item.valid_period.end) : "";
+        }
+        if (weatherStatusEl) {
+          if (groupEntries.length === 0) {
+            weatherStatusEl.textContent = "No area-level forecasts available.";
+          } else {
+            const topEntry = groupEntries[0];
+            if (totalAreas > 0 && topEntry.areas.length === totalAreas) {
+              weatherStatusEl.textContent = topEntry.condition + " expected islandwide.";
+            } else if (totalAreas > 0) {
+              weatherStatusEl.textContent = topEntry.condition + " in " + topEntry.areas.length + " of " + totalAreas + " areas.";
+            } else {
+              weatherStatusEl.textContent = topEntry.condition + " expected.";
+            }
+          }
+        }
+        if (weatherGroupsEl) {
+          weatherGroupsEl.innerHTML = "";
+          const fragment = document.createDocumentFragment();
+          const MAX_GROUPS = 3;
+          const DISPLAY_LIMIT = 6;
+          groupEntries.slice(0, MAX_GROUPS).forEach(function (entry) {
+            const groupEl = document.createElement("div");
+            groupEl.className = "weather-group";
+            const title = document.createElement("h3");
+            title.textContent = entry.condition;
+            groupEl.appendChild(title);
+            const list = document.createElement("ul");
+            entry.areas.slice(0, DISPLAY_LIMIT).forEach(function (area) {
+              const itemEl = document.createElement("li");
+              itemEl.textContent = area;
+              list.appendChild(itemEl);
+            });
+            if (entry.areas.length > DISPLAY_LIMIT) {
+              const remainderEl = document.createElement("li");
+              remainderEl.className = "weather-more";
+              remainderEl.textContent = "+" + (entry.areas.length - DISPLAY_LIMIT) + " more area" + (entry.areas.length - DISPLAY_LIMIT === 1 ? "" : "s");
+              list.appendChild(remainderEl);
+            }
+            groupEl.appendChild(list);
+            fragment.appendChild(groupEl);
+          });
+          if (groupEntries.length > MAX_GROUPS) {
+            const remainderDetails = groupEntries.slice(MAX_GROUPS).map(function (entry) {
+              return entry.condition + " (" + entry.areas.length + ")";
+            }).join(", ");
+            const summaryEl = document.createElement("div");
+            summaryEl.className = "weather-group";
+            const summaryTitle = document.createElement("h3");
+            summaryTitle.textContent = "Other conditions";
+            summaryEl.appendChild(summaryTitle);
+            const summaryText = document.createElement("p");
+            summaryText.className = "weather-validity";
+            summaryText.textContent = remainderDetails;
+            summaryEl.appendChild(summaryText);
+            fragment.appendChild(summaryEl);
+          }
+          if (!fragment.childNodes.length) {
+            const emptyEl = document.createElement("p");
+            emptyEl.className = "weather-validity";
+            emptyEl.textContent = "Area-level details are not available right now.";
+            weatherGroupsEl.appendChild(emptyEl);
+          } else {
+            weatherGroupsEl.appendChild(fragment);
+          }
+          weatherGroupsEl.setAttribute("aria-busy", "false");
+        }
+        if (weatherCardEl) {
+          weatherCardEl.dataset.weatherLoaded = "true";
+        }
+      } catch (error) {
+        console.error("Failed to load weather forecast", error);
+        if (weatherStatusEl) {
+          weatherStatusEl.textContent = "Unable to load the latest forecast. Try again shortly.";
+        }
+        if (weatherGroupsEl) {
+          weatherGroupsEl.innerHTML = "";
+          weatherGroupsEl.setAttribute("aria-busy", "false");
+        }
+        if (weatherUpdatedEl) {
+          weatherUpdatedEl.textContent = "";
+        }
+        if (weatherValidityEl) {
+          weatherValidityEl.textContent = "";
+        }
+        if (weatherCardEl) {
+          delete weatherCardEl.dataset.weatherLoaded;
+        }
+      }
+    }
+
+    function startWeatherUpdates() {
+      if (!weatherCardEl) {
+        return;
+      }
+      if (weatherRefreshTimer) {
+        window.clearInterval(weatherRefreshTimer);
+      }
+      fetchWeather();
+      weatherRefreshTimer = window.setInterval(fetchWeather, WEATHER_REFRESH_INTERVAL_MS);
+    }
+
+    function stopWeatherUpdates() {
+      if (weatherRefreshTimer) {
+        window.clearInterval(weatherRefreshTimer);
+        weatherRefreshTimer = null;
+      }
+      resetWeatherCard("Sign in to view the latest forecast.");
     }
 
     function ensureMap() {
@@ -905,6 +1272,139 @@
       return span;
     }
 
+    function summarizeWeatherSnapshot(snapshot) {
+      if (!snapshot || typeof snapshot !== "object") {
+        return null;
+      }
+      const nearest = snapshot.nearest_area && typeof snapshot.nearest_area === "object" ? snapshot.nearest_area : null;
+      const rawForecasts = Array.isArray(snapshot.forecasts) ? snapshot.forecasts : [];
+      const forecasts = rawForecasts
+        .map(function (entry) {
+          if (!entry || (entry.forecast == null && entry.area == null)) {
+            return null;
+          }
+          const forecastText = entry.forecast ? String(entry.forecast).trim() : "";
+          const areaText = entry.area ? String(entry.area).trim() : "";
+          if (!forecastText && !areaText) {
+            return null;
+          }
+          return {
+            forecast: forecastText,
+            area: areaText
+          };
+        })
+        .filter(Boolean);
+
+      let summary = "";
+      if (nearest && nearest.forecast) {
+        summary = String(nearest.forecast);
+        if (nearest.area) {
+          summary += " near " + String(nearest.area);
+        }
+        if (typeof nearest.distance_km === "number" && isFinite(nearest.distance_km)) {
+          summary += " (~" + nearest.distance_km.toFixed(1) + " km away)";
+        }
+      } else if (forecasts.length > 0) {
+        const first = forecasts[0];
+        if (first.forecast) {
+          summary = first.forecast;
+          if (first.area) {
+            summary += " in " + first.area;
+          }
+        }
+      }
+
+      if (!summary) {
+        if (snapshot.api_status && snapshot.api_status !== "healthy") {
+          summary = "Weather service status: " + snapshot.api_status;
+        } else if (forecasts.length > 0) {
+          const first = forecasts[0];
+          summary = (first.area || "Forecast") + ": " + (first.forecast || "Unknown");
+        } else {
+          return null;
+        }
+      }
+
+      const metaParts = [];
+      if (snapshot.valid_period && typeof snapshot.valid_period === "object") {
+        const windowText = formatWeatherWindow(snapshot.valid_period.start, snapshot.valid_period.end);
+        if (windowText) {
+          metaParts.push(windowText);
+        }
+      }
+      if (snapshot.fetched_at) {
+        const fetched = formatWeatherTimestamp(snapshot.fetched_at);
+        if (fetched) {
+          metaParts.push("Captured " + fetched);
+        }
+      } else if (snapshot.api_timestamp) {
+        const stamp = formatWeatherTimestamp(snapshot.api_timestamp);
+        if (stamp) {
+          metaParts.push("Valid as of " + stamp);
+        }
+      }
+      if (snapshot.api_status && snapshot.api_status !== "healthy" && summary.indexOf("Weather service status:") !== 0) {
+        metaParts.push("Service status: " + snapshot.api_status);
+      }
+
+      return {
+        summary: summary,
+        meta: metaParts,
+        forecasts: forecasts,
+        totalForecasts: forecasts.length
+      };
+    }
+
+    function buildReportWeatherSection(snapshot, summaryDetails) {
+      const details = summaryDetails || summarizeWeatherSnapshot(snapshot);
+      if (!details) {
+        return null;
+      }
+      const section = document.createElement("section");
+      section.className = "report-weather";
+
+      const heading = document.createElement("h3");
+      heading.textContent = "Weather snapshot";
+      section.appendChild(heading);
+
+      const status = document.createElement("p");
+      status.className = "report-weather-status";
+      status.textContent = details.summary;
+      section.appendChild(status);
+
+      if (details.meta.length > 0) {
+        const meta = document.createElement("p");
+        meta.className = "report-weather-meta";
+        meta.textContent = details.meta.join(" • ");
+        section.appendChild(meta);
+      }
+
+      if (details.forecasts.length > 0) {
+        const list = document.createElement("ul");
+        list.className = "report-weather-areas";
+        const LIMIT = 4;
+        details.forecasts.slice(0, LIMIT).forEach(function (entry) {
+          const textParts = entry.forecast ? [entry.forecast] : [];
+          if (entry.area) {
+            textParts.push(entry.area);
+          }
+          const li = document.createElement("li");
+          li.textContent = textParts.join(" – ");
+          list.appendChild(li);
+        });
+        if (details.totalForecasts > LIMIT) {
+          const remainder = document.createElement("li");
+          remainder.textContent = "+" + (details.totalForecasts - LIMIT) + " more area" + (details.totalForecasts - LIMIT === 1 ? "" : "s");
+          list.appendChild(remainder);
+        }
+        if (list.childNodes.length > 0) {
+          section.appendChild(list);
+        }
+      }
+
+      return section;
+    }
+
     function renderReportCard(report) {
       const card = document.createElement("article");
       card.className = "card";
@@ -912,6 +1412,8 @@
       const title = document.createElement("h2");
       title.textContent = "Report " + (report && report.report_id ? report.report_id : "Unknown");
       card.appendChild(title);
+
+      const weatherDetails = report ? summarizeWeatherSnapshot(report.weather_snapshot) : null;
 
       const meta = document.createElement("div");
       meta.className = "meta";
@@ -922,6 +1424,11 @@
       if (report && report.location && typeof report.location.accuracy_m === "number") {
         meta.appendChild(createMetaRow("Accuracy", "±" + report.location.accuracy_m + " m"));
       }
+      if (weatherDetails) {
+        meta.appendChild(createMetaRow("Weather", weatherDetails.summary));
+      } else {
+        meta.appendChild(createMetaRow("Weather", "Not captured"));
+      }
       card.appendChild(meta);
 
       if (report && report.notes) {
@@ -929,6 +1436,11 @@
         notes.className = "notes";
         notes.textContent = report.notes;
         card.appendChild(notes);
+      }
+
+      const weatherSection = report ? buildReportWeatherSection(report.weather_snapshot, weatherDetails) : null;
+      if (weatherSection) {
+        card.appendChild(weatherSection);
       }
 
       const preview = document.createElement("div");
@@ -1042,6 +1554,7 @@
           appView.setAttribute("aria-hidden", "false");
         }
         ensureMap();
+        startWeatherUpdates();
         setMapStatus("Loading geotagged reports…");
         refreshBtn.disabled = loading;
         loadMoreBtn.disabled = loading || !nextCursor;
@@ -1064,6 +1577,7 @@
       refreshBtn.disabled = true;
       loadMoreBtn.disabled = true;
       clearResults();
+      stopWeatherUpdates();
       setStatus("");
       return null;
     }

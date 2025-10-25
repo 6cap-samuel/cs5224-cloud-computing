@@ -71,6 +71,82 @@ def _prepare_location(location) -> dict | None:
     return loc
 
 
+def _prepare_weather(snapshot) -> dict | None:
+    if not isinstance(snapshot, dict):
+        return None
+
+    prepared: dict[str, object] = {}
+
+    source = _clean_string(snapshot.get("source"), 255)
+    if source:
+        prepared["source"] = source
+
+    fetched_at = _clean_string(snapshot.get("fetched_at"), 64)
+    if fetched_at:
+        prepared["fetched_at"] = fetched_at
+
+    api_update = _clean_string(snapshot.get("api_update_timestamp"), 64)
+    if api_update:
+        prepared["api_update_timestamp"] = api_update
+
+    api_timestamp = _clean_string(snapshot.get("api_timestamp"), 64)
+    if api_timestamp:
+        prepared["api_timestamp"] = api_timestamp
+
+    api_status = _clean_string(snapshot.get("api_status"), 64)
+    if api_status:
+        prepared["api_status"] = api_status
+
+    valid_period = snapshot.get("valid_period")
+    if isinstance(valid_period, dict):
+        start = _clean_string(valid_period.get("start"), 64)
+        end = _clean_string(valid_period.get("end"), 64)
+        period = _strip_none({"start": start, "end": end})
+        if period:
+            prepared["valid_period"] = period
+
+    nearest_area = snapshot.get("nearest_area")
+    if isinstance(nearest_area, dict):
+        nearest = _strip_none(
+            {
+                "area": _clean_string(nearest_area.get("area"), 120),
+                "forecast": _clean_string(nearest_area.get("forecast"), 500),
+            }
+        )
+        distance = _safe_decimal(nearest_area.get("distance_km"), precision=2)
+        if distance is not None and distance >= 0:
+            nearest["distance_km"] = distance
+        if nearest:
+            prepared["nearest_area"] = nearest
+
+    forecasts = snapshot.get("forecasts")
+    if isinstance(forecasts, list):
+        cleaned_forecasts = []
+        for entry in forecasts:
+            if not isinstance(entry, dict):
+                continue
+            cleaned = _strip_none(
+                {
+                    "area": _clean_string(entry.get("area"), 120),
+                    "forecast": _clean_string(entry.get("forecast"), 500),
+                }
+            )
+            if cleaned:
+                cleaned_forecasts.append(cleaned)
+        if cleaned_forecasts:
+            prepared["forecasts"] = cleaned_forecasts
+
+    total_forecasts = snapshot.get("total_forecasts")
+    try:
+        total_forecasts = int(total_forecasts)
+    except (TypeError, ValueError):
+        total_forecasts = None
+    if total_forecasts is not None and total_forecasts >= 0:
+        prepared["total_forecasts"] = total_forecasts
+
+    return prepared or None
+
+
 def _clean_string(value, max_length: int | None = None):
     if value is None:
         return None
@@ -100,6 +176,7 @@ def lambda_handler(event, ctx):
     filename = _clean_string(event.get("filename"), 255)
 
     location = _prepare_location(event.get("location"))
+    weather_snapshot = _prepare_weather(event.get("weather_snapshot"))
 
     item = {
         "report_id": report_id,
@@ -113,6 +190,7 @@ def lambda_handler(event, ctx):
         "assets": _ensure_dict(event.get("assets")),
         "ingest_error": _clean_string(event.get("ingest_error"), 64),
         "location": location,
+        "weather_snapshot": weather_snapshot,
     }
 
     # DynamoDB does not allow empty map attributes.
@@ -149,4 +227,6 @@ def lambda_handler(event, ctx):
         }
         if "captured_at" in location:
             event["location"]["captured_at"] = location["captured_at"]
+    if weather_snapshot:
+        event["weather_snapshot"] = weather_snapshot
     return event

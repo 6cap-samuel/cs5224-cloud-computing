@@ -7,6 +7,8 @@ import math
 import os
 import re
 import uuid
+import urllib.error
+import urllib.request
 
 import boto3
 
@@ -22,6 +24,11 @@ JPEG_QUALITY = int(os.environ.get("IMAGE_JPEG_QUALITY", "85"))
 PNG_COMPRESS_LEVEL = int(os.environ.get("IMAGE_PNG_COMPRESS_LEVEL", "6"))
 MIN_COMPRESSION_RATIO = float(os.environ.get("IMAGE_MIN_COMPRESSION_RATIO", "0.95"))
 MAX_LOCATION_ACCURACY_METERS = float(os.environ.get("MAX_LOCATION_ACCURACY_METERS", "10000"))
+WEATHER_API_URL = os.environ.get(
+    "WEATHER_API_URL", "https://api.data.gov.sg/v1/environment/2-hour-weather-forecast"
+)
+WEATHER_API_TIMEOUT = float(os.environ.get("WEATHER_API_TIMEOUT", "4"))
+WEATHER_MAX_FORECASTS = int(os.environ.get("WEATHER_MAX_FORECASTS", "48"))
 
 _FILENAME_CLEAN_PATTERN = re.compile(r"[^A-Za-z0-9._-]+")
 
@@ -170,6 +177,142 @@ def _handle_photo(body: dict, request_id: str) -> None:
     body["content_type"] = content_type
 
 
+def _isoformat_now() -> str:
+    return dt.datetime.utcnow().replace(tzinfo=dt.timezone.utc).isoformat().replace("+00:00", "Z")
+
+
+def _distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    radius = 6371.0
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    d_phi = math.radians(lat2 - lat1)
+    d_lambda = math.radians(lon2 - lon1)
+    a = math.sin(d_phi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(d_lambda / 2) ** 2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return radius * c
+
+
+def _fetch_weather_snapshot(location: dict | None) -> dict | None:
+    if not WEATHER_API_URL:
+        return None
+
+    try:
+        request = urllib.request.Request(
+            WEATHER_API_URL,
+            headers={
+                "User-Agent": "VapeWatchIngest/1.0 (+https://vapewatch.gov)",
+                "Accept": "application/json",
+            },
+        )
+        with urllib.request.urlopen(request, timeout=WEATHER_API_TIMEOUT) as response:
+            if response.status != 200:
+                log.warning("Weather API returned status %s", response.status)
+                return None
+            raw = response.read()
+            payload = json.loads(raw.decode("utf-8"))
+    except urllib.error.URLError:
+        log.exception("Failed to reach weather API")
+        return None
+    except Exception:
+        log.exception("Failed to parse weather API response")
+        return None
+
+    items = payload.get("items")
+    if not isinstance(items, list) or not items:
+        return None
+
+    latest = items[0] or {}
+    forecasts = latest.get("forecasts") or []
+    if not isinstance(forecasts, list):
+        forecasts = []
+
+    sanitized_forecasts: list[dict] = []
+    forecast_map: dict[str, str] = {}
+    for entry in forecasts[:WEATHER_MAX_FORECASTS]:
+        if not isinstance(entry, dict):
+            continue
+        area = entry.get("area")
+        forecast = entry.get("forecast")
+        if not area or not forecast:
+            continue
+        area_str = str(area).strip()
+        forecast_str = str(forecast).strip()
+        if not area_str or not forecast_str:
+            continue
+        forecast_map[area_str] = forecast_str
+        sanitized_forecasts.append({"area": area_str[:120], "forecast": forecast_str[:500]})
+
+    snapshot: dict[str, object] = {
+        "source": "data.gov.sg/2-hour-weather-forecast",
+        "fetched_at": _isoformat_now(),
+    }
+
+    for key, attr in (
+        ("update_timestamp", "api_update_timestamp"),
+        ("timestamp", "api_timestamp"),
+    ):
+        value = latest.get(key)
+        if isinstance(value, str) and value.strip():
+            snapshot[attr] = value.strip()[:64]
+
+    valid_period = latest.get("valid_period")
+    if isinstance(valid_period, dict):
+        start = valid_period.get("start")
+        end = valid_period.get("end")
+        period_payload = {}
+        if isinstance(start, str) and start.strip():
+            period_payload["start"] = start.strip()[:64]
+        if isinstance(end, str) and end.strip():
+            period_payload["end"] = end.strip()[:64]
+        if period_payload:
+            snapshot["valid_period"] = period_payload
+
+    if sanitized_forecasts:
+        snapshot["forecasts"] = sanitized_forecasts
+        snapshot["total_forecasts"] = len(sanitized_forecasts)
+
+    area_metadata = payload.get("area_metadata")
+    if isinstance(area_metadata, list) and location:
+        try:
+            lat = float(location.get("latitude"))
+            lon = float(location.get("longitude"))
+        except (TypeError, ValueError):
+            lat = lon = None
+        best_match = None
+        if lat is not None and lon is not None:
+            for entry in area_metadata:
+                if not isinstance(entry, dict):
+                    continue
+                name = entry.get("name")
+                label = entry.get("label_location") or {}
+                try:
+                    area_lat = float(label.get("latitude"))
+                    area_lon = float(label.get("longitude"))
+                except (TypeError, ValueError):
+                    continue
+                distance = _distance_km(lat, lon, area_lat, area_lon)
+                if distance is None or not math.isfinite(distance):
+                    continue
+                if best_match is None or distance < best_match["distance"]:
+                    best_match = {"area": str(name or "").strip(), "distance": distance}
+        if best_match and best_match["area"]:
+            forecast_text = forecast_map.get(best_match["area"])
+            nearest_payload: dict[str, object] = {"area": best_match["area"][:120]}
+            if forecast_text:
+                nearest_payload["forecast"] = forecast_text[:500]
+            if math.isfinite(best_match["distance"]):
+                nearest_payload["distance_km"] = round(best_match["distance"], 2)
+            snapshot["nearest_area"] = nearest_payload
+
+    api_info = payload.get("api_info")
+    if isinstance(api_info, dict):
+        status = api_info.get("status")
+        if isinstance(status, str) and status.strip():
+            snapshot["api_status"] = status.strip()[:32]
+
+    return snapshot if len(snapshot) > 2 else None
+
+
 def lambda_handler(event, ctx):
     body = event.get("body")
     try:
@@ -194,6 +337,11 @@ def lambda_handler(event, ctx):
         _handle_photo(body, request_id)
     except Exception:
         return {"statusCode": 500, "body": json.dumps({"error": "persist_failed"})}
+
+    if WEATHER_API_URL:
+        weather_snapshot = _fetch_weather_snapshot(body.get("location"))
+        if weather_snapshot:
+            body["weather_snapshot"] = weather_snapshot
 
     if ARN:
         try:
