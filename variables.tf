@@ -25,3 +25,15 @@ variable "lambda_src_root" {
   type        = string
   default     = "./lambdas"
 }
+
+variable "lamppost_max_distance_meters" {
+  description = "Maximum distance (in meters) to associate a lamppost with a submission"
+  type        = number
+  default     = 500
+}
+
+variable "park_max_distance_meters" {
+  description = "Maximum distance (in meters) to associate a park with a submission"
+  type        = number
+  default     = 750
+}

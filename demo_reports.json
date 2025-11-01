@@ -1,0 +1,1770 @@
+{
+  "reports": [
+    {
+      "report_id": "f0fd5432-87e0-450b-b76d-1fc3bbf5a6d4",
+      "submitted_at": "2025-11-01T13:08:51.984168",
+      "status": "RESOLVED",
+      "notes": "Presentation seed report #1",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_01.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/f0fd5432-87e0-450b-b76d-1fc3bbf5a6d4.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/f0fd5432-87e0-450b-b76d-1fc3bbf5a6d4.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3019925868434703,
+        "longitude": 103.84740212545923
+      },
+      "audit": {
+        "status": "REJECTED",
+        "timestamp": "2025-11-01T13:10:51.984168",
+        "officer": {
+          "name": "Officer 1",
+          "email": "officer1@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "REJECTED",
+          "timestamp": "2025-11-01T13:10:51.984168",
+          "officer": {
+            "name": "Officer 1",
+            "email": "officer1@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "525d328b-bfcf-4eb5-b6e1-451dd4b80c36",
+      "submitted_at": "2025-11-01T13:01:51.984168",
+      "status": "ARCHIVED",
+      "notes": "Presentation seed report #2",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_02.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/525d328b-bfcf-4eb5-b6e1-451dd4b80c36.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/525d328b-bfcf-4eb5-b6e1-451dd4b80c36.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.323404398838106,
+        "longitude": 103.80144256011693
+      },
+      "audit": {
+        "status": "NEEDS_REVIEW",
+        "timestamp": "2025-11-01T13:03:51.984168",
+        "officer": {
+          "name": "Officer 2",
+          "email": "officer2@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "NEEDS_REVIEW",
+          "timestamp": "2025-11-01T13:03:51.984168",
+          "officer": {
+            "name": "Officer 2",
+            "email": "officer2@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "a64915fc-5f07-4b0d-9bd8-b2ad81572d12",
+      "submitted_at": "2025-11-01T12:54:51.984168",
+      "status": "PENDING_REVIEW",
+      "notes": "Presentation seed report #3",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_03.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/a64915fc-5f07-4b0d-9bd8-b2ad81572d12.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/a64915fc-5f07-4b0d-9bd8-b2ad81572d12.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.316454325209019,
+        "longitude": 103.81060549135348
+      },
+      "audit": {
+        "status": "NEEDS_REVIEW",
+        "timestamp": "2025-11-01T12:56:51.984168",
+        "officer": {
+          "name": "Officer 3",
+          "email": "officer3@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "NEEDS_REVIEW",
+          "timestamp": "2025-11-01T12:56:51.984168",
+          "officer": {
+            "name": "Officer 3",
+            "email": "officer3@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "90082a30-677f-41e6-9372-743f228ec227",
+      "submitted_at": "2025-11-01T12:47:51.984168",
+      "status": "ARCHIVED",
+      "notes": "Presentation seed report #4",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_04.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/90082a30-677f-41e6-9372-743f228ec227.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/90082a30-677f-41e6-9372-743f228ec227.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3226846606326002,
+        "longitude": 103.82525088786288
+      },
+      "audit": null,
+      "audit_history": []
+    },
+    {
+      "report_id": "9c5e63fc-645a-49bc-bea2-723c2a768844",
+      "submitted_at": "2025-11-01T12:40:51.984168",
+      "status": "ARCHIVED",
+      "notes": "Presentation seed report #5",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_05.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/9c5e63fc-645a-49bc-bea2-723c2a768844.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/9c5e63fc-645a-49bc-bea2-723c2a768844.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.329843898338543,
+        "longitude": 103.85392534345294
+      },
+      "audit": {
+        "status": "REJECTED",
+        "timestamp": "2025-11-01T12:42:51.984168",
+        "officer": {
+          "name": "Officer 5",
+          "email": "officer5@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "REJECTED",
+          "timestamp": "2025-11-01T12:42:51.984168",
+          "officer": {
+            "name": "Officer 5",
+            "email": "officer5@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "e38f3066-f104-45a1-a730-171d033241a5",
+      "submitted_at": "2025-11-01T12:33:51.984168",
+      "status": "ARCHIVED",
+      "notes": "Presentation seed report #6",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_06.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/e38f3066-f104-45a1-a730-171d033241a5.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/e38f3066-f104-45a1-a730-171d033241a5.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3067564558172011,
+        "longitude": 103.80730587493846
+      },
+      "audit": {
+        "status": "REJECTED",
+        "timestamp": "2025-11-01T12:35:51.984168",
+        "officer": {
+          "name": "Officer 1",
+          "email": "officer1@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "REJECTED",
+          "timestamp": "2025-11-01T12:35:51.984168",
+          "officer": {
+            "name": "Officer 1",
+            "email": "officer1@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "8fd69182-b0b1-41b7-8cf1-777589d7810a",
+      "submitted_at": "2025-11-01T12:26:51.984168",
+      "status": "ARCHIVED",
+      "notes": "Presentation seed report #7",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_07.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/8fd69182-b0b1-41b7-8cf1-777589d7810a.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/8fd69182-b0b1-41b7-8cf1-777589d7810a.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3268590150871251,
+        "longitude": 103.81186849460896
+      },
+      "audit": {
+        "status": "NEEDS_REVIEW",
+        "timestamp": "2025-11-01T12:28:51.984168",
+        "officer": {
+          "name": "Officer 2",
+          "email": "officer2@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "NEEDS_REVIEW",
+          "timestamp": "2025-11-01T12:28:51.984168",
+          "officer": {
+            "name": "Officer 2",
+            "email": "officer2@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "23724542-1f33-4609-9560-eeca76727896",
+      "submitted_at": "2025-11-01T12:19:51.984168",
+      "status": "ARCHIVED",
+      "notes": "Presentation seed report #8",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_08.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/23724542-1f33-4609-9560-eeca76727896.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/23724542-1f33-4609-9560-eeca76727896.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.327928614454915,
+        "longitude": 103.85171486664862
+      },
+      "audit": {
+        "status": "NEEDS_REVIEW",
+        "timestamp": "2025-11-01T12:21:51.984168",
+        "officer": {
+          "name": "Officer 3",
+          "email": "officer3@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "NEEDS_REVIEW",
+          "timestamp": "2025-11-01T12:21:51.984168",
+          "officer": {
+            "name": "Officer 3",
+            "email": "officer3@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "8efeb2b8-6033-4c44-b8a6-a2fbbdbcf379",
+      "submitted_at": "2025-11-01T12:12:51.984168",
+      "status": "ARCHIVED",
+      "notes": "Presentation seed report #9",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_09.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/8efeb2b8-6033-4c44-b8a6-a2fbbdbcf379.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/8efeb2b8-6033-4c44-b8a6-a2fbbdbcf379.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.318353070953928,
+        "longitude": 103.83960146674274
+      },
+      "audit": null,
+      "audit_history": []
+    },
+    {
+      "report_id": "def14844-bdca-474c-ae2e-8d0dd9dee284",
+      "submitted_at": "2025-11-01T12:05:51.984168",
+      "status": "IN_PROGRESS",
+      "notes": "Presentation seed report #10",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_10.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/def14844-bdca-474c-ae2e-8d0dd9dee284.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/def14844-bdca-474c-ae2e-8d0dd9dee284.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.330610351478871,
+        "longitude": 103.83381922077145
+      },
+      "audit": {
+        "status": "REJECTED",
+        "timestamp": "2025-11-01T12:07:51.984168",
+        "officer": {
+          "name": "Officer 5",
+          "email": "officer5@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "REJECTED",
+          "timestamp": "2025-11-01T12:07:51.984168",
+          "officer": {
+            "name": "Officer 5",
+            "email": "officer5@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "98f6d296-f316-41d6-bdcf-7e9d6e208270",
+      "submitted_at": "2025-11-01T11:58:51.984168",
+      "status": "ARCHIVED",
+      "notes": "Presentation seed report #11",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_11.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/98f6d296-f316-41d6-bdcf-7e9d6e208270.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/98f6d296-f316-41d6-bdcf-7e9d6e208270.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3284764566107048,
+        "longitude": 103.82233567609036
+      },
+      "audit": {
+        "status": "REJECTED",
+        "timestamp": "2025-11-01T12:00:51.984168",
+        "officer": {
+          "name": "Officer 1",
+          "email": "officer1@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "REJECTED",
+          "timestamp": "2025-11-01T12:00:51.984168",
+          "officer": {
+            "name": "Officer 1",
+            "email": "officer1@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "aa3360e1-b867-4b97-b4dc-be7246fd9dd3",
+      "submitted_at": "2025-11-01T11:51:51.984168",
+      "status": "PENDING_REVIEW",
+      "notes": "Presentation seed report #12",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_12.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/aa3360e1-b867-4b97-b4dc-be7246fd9dd3.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/aa3360e1-b867-4b97-b4dc-be7246fd9dd3.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3126437455257045,
+        "longitude": 103.82325375765953
+      },
+      "audit": null,
+      "audit_history": []
+    },
+    {
+      "report_id": "8dc7226e-baed-42fa-bd59-e1eabb6b536c",
+      "submitted_at": "2025-11-01T11:44:51.984168",
+      "status": "PENDING_REVIEW",
+      "notes": "Presentation seed report #13",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_13.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/8dc7226e-baed-42fa-bd59-e1eabb6b536c.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/8dc7226e-baed-42fa-bd59-e1eabb6b536c.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3381397295214907,
+        "longitude": 103.85235264824286
+      },
+      "audit": {
+        "status": "APPROVED",
+        "timestamp": "2025-11-01T11:46:51.984168",
+        "officer": {
+          "name": "Officer 3",
+          "email": "officer3@vapewatch.gov"
+        },
+        "notes": "Looks good."
+      },
+      "audit_history": [
+        {
+          "status": "APPROVED",
+          "timestamp": "2025-11-01T11:46:51.984168",
+          "officer": {
+            "name": "Officer 3",
+            "email": "officer3@vapewatch.gov"
+          },
+          "notes": "Looks good."
+        }
+      ]
+    },
+    {
+      "report_id": "7e7f4334-e829-4809-a8ef-2add0a7023d9",
+      "submitted_at": "2025-11-01T11:37:51.984168",
+      "status": "IN_PROGRESS",
+      "notes": "Presentation seed report #14",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_14.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/7e7f4334-e829-4809-a8ef-2add0a7023d9.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/7e7f4334-e829-4809-a8ef-2add0a7023d9.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3320538708377143,
+        "longitude": 103.82302552059411
+      },
+      "audit": {
+        "status": "NEEDS_REVIEW",
+        "timestamp": "2025-11-01T11:39:51.984168",
+        "officer": {
+          "name": "Officer 4",
+          "email": "officer4@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "NEEDS_REVIEW",
+          "timestamp": "2025-11-01T11:39:51.984168",
+          "officer": {
+            "name": "Officer 4",
+            "email": "officer4@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "7119f026-4972-4ca4-b2eb-b8f01d71fe95",
+      "submitted_at": "2025-11-01T11:30:51.984168",
+      "status": "RESOLVED",
+      "notes": "Presentation seed report #15",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_15.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/7119f026-4972-4ca4-b2eb-b8f01d71fe95.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/7119f026-4972-4ca4-b2eb-b8f01d71fe95.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3138815157814392,
+        "longitude": 103.80867705000838
+      },
+      "audit": {
+        "status": "REJECTED",
+        "timestamp": "2025-11-01T11:32:51.984168",
+        "officer": {
+          "name": "Officer 5",
+          "email": "officer5@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "REJECTED",
+          "timestamp": "2025-11-01T11:32:51.984168",
+          "officer": {
+            "name": "Officer 5",
+            "email": "officer5@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "27825326-bdf3-4514-b7bc-a51542ae7f70",
+      "submitted_at": "2025-11-01T11:23:51.984168",
+      "status": "ARCHIVED",
+      "notes": "Presentation seed report #16",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_16.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/27825326-bdf3-4514-b7bc-a51542ae7f70.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/27825326-bdf3-4514-b7bc-a51542ae7f70.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3367514419792572,
+        "longitude": 103.82681483489363
+      },
+      "audit": {
+        "status": "APPROVED",
+        "timestamp": "2025-11-01T11:25:51.984168",
+        "officer": {
+          "name": "Officer 1",
+          "email": "officer1@vapewatch.gov"
+        },
+        "notes": "Looks good."
+      },
+      "audit_history": [
+        {
+          "status": "APPROVED",
+          "timestamp": "2025-11-01T11:25:51.984168",
+          "officer": {
+            "name": "Officer 1",
+            "email": "officer1@vapewatch.gov"
+          },
+          "notes": "Looks good."
+        }
+      ]
+    },
+    {
+      "report_id": "7c84f0d3-212c-480d-9d42-7071fc0adf3b",
+      "submitted_at": "2025-11-01T11:16:51.984168",
+      "status": "ARCHIVED",
+      "notes": "Presentation seed report #17",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_17.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/7c84f0d3-212c-480d-9d42-7071fc0adf3b.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/7c84f0d3-212c-480d-9d42-7071fc0adf3b.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3073514270174,
+        "longitude": 103.85958449041954
+      },
+      "audit": null,
+      "audit_history": []
+    },
+    {
+      "report_id": "cf78b543-adf6-437b-8557-30029b85f85b",
+      "submitted_at": "2025-11-01T11:09:51.984168",
+      "status": "ARCHIVED",
+      "notes": "Presentation seed report #18",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_18.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/cf78b543-adf6-437b-8557-30029b85f85b.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/cf78b543-adf6-437b-8557-30029b85f85b.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.309896537067702,
+        "longitude": 103.81832261188138
+      },
+      "audit": null,
+      "audit_history": []
+    },
+    {
+      "report_id": "95ebacce-b134-4cd4-93db-05ee764bf0e7",
+      "submitted_at": "2025-11-01T11:02:51.984168",
+      "status": "ARCHIVED",
+      "notes": "Presentation seed report #19",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_19.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/95ebacce-b134-4cd4-93db-05ee764bf0e7.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/95ebacce-b134-4cd4-93db-05ee764bf0e7.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3341956361207334,
+        "longitude": 103.84154053659947
+      },
+      "audit": null,
+      "audit_history": []
+    },
+    {
+      "report_id": "d4fb2712-ff83-4e60-8898-35135094c685",
+      "submitted_at": "2025-11-01T10:55:51.984168",
+      "status": "IN_PROGRESS",
+      "notes": "Presentation seed report #20",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_20.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/d4fb2712-ff83-4e60-8898-35135094c685.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/d4fb2712-ff83-4e60-8898-35135094c685.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3244097618855986,
+        "longitude": 103.83270611416638
+      },
+      "audit": {
+        "status": "NEEDS_REVIEW",
+        "timestamp": "2025-11-01T10:57:51.984168",
+        "officer": {
+          "name": "Officer 5",
+          "email": "officer5@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "NEEDS_REVIEW",
+          "timestamp": "2025-11-01T10:57:51.984168",
+          "officer": {
+            "name": "Officer 5",
+            "email": "officer5@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "337938ef-d680-431b-a9f0-98645a44cb73",
+      "submitted_at": "2025-11-01T10:48:51.984168",
+      "status": "ARCHIVED",
+      "notes": "Presentation seed report #21",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_21.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/337938ef-d680-431b-a9f0-98645a44cb73.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/337938ef-d680-431b-a9f0-98645a44cb73.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3336565025873128,
+        "longitude": 103.82039247954025
+      },
+      "audit": {
+        "status": "REJECTED",
+        "timestamp": "2025-11-01T10:50:51.984168",
+        "officer": {
+          "name": "Officer 1",
+          "email": "officer1@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "REJECTED",
+          "timestamp": "2025-11-01T10:50:51.984168",
+          "officer": {
+            "name": "Officer 1",
+            "email": "officer1@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "15301ee3-b6e8-45fe-a6ad-912d75754591",
+      "submitted_at": "2025-11-01T10:41:51.984168",
+      "status": "RESOLVED",
+      "notes": "Presentation seed report #22",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_22.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/15301ee3-b6e8-45fe-a6ad-912d75754591.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/15301ee3-b6e8-45fe-a6ad-912d75754591.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3212249317010858,
+        "longitude": 103.81501040377695
+      },
+      "audit": {
+        "status": "REJECTED",
+        "timestamp": "2025-11-01T10:43:51.984168",
+        "officer": {
+          "name": "Officer 2",
+          "email": "officer2@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "REJECTED",
+          "timestamp": "2025-11-01T10:43:51.984168",
+          "officer": {
+            "name": "Officer 2",
+            "email": "officer2@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "61a23769-9f83-44de-a5eb-7cf48f649e6a",
+      "submitted_at": "2025-11-01T10:34:51.984168",
+      "status": "PENDING_REVIEW",
+      "notes": "Presentation seed report #23",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_23.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/61a23769-9f83-44de-a5eb-7cf48f649e6a.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/61a23769-9f83-44de-a5eb-7cf48f649e6a.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3134516694059422,
+        "longitude": 103.84169434004703
+      },
+      "audit": {
+        "status": "APPROVED",
+        "timestamp": "2025-11-01T10:36:51.984168",
+        "officer": {
+          "name": "Officer 3",
+          "email": "officer3@vapewatch.gov"
+        },
+        "notes": "Looks good."
+      },
+      "audit_history": [
+        {
+          "status": "APPROVED",
+          "timestamp": "2025-11-01T10:36:51.984168",
+          "officer": {
+            "name": "Officer 3",
+            "email": "officer3@vapewatch.gov"
+          },
+          "notes": "Looks good."
+        }
+      ]
+    },
+    {
+      "report_id": "74d654bf-2f87-4964-82af-8e8f40f8968e",
+      "submitted_at": "2025-11-01T10:27:51.984168",
+      "status": "RESOLVED",
+      "notes": "Presentation seed report #24",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_24.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/74d654bf-2f87-4964-82af-8e8f40f8968e.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/74d654bf-2f87-4964-82af-8e8f40f8968e.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.334269936526838,
+        "longitude": 103.83697033131206
+      },
+      "audit": {
+        "status": "APPROVED",
+        "timestamp": "2025-11-01T10:29:51.984168",
+        "officer": {
+          "name": "Officer 4",
+          "email": "officer4@vapewatch.gov"
+        },
+        "notes": "Looks good."
+      },
+      "audit_history": [
+        {
+          "status": "APPROVED",
+          "timestamp": "2025-11-01T10:29:51.984168",
+          "officer": {
+            "name": "Officer 4",
+            "email": "officer4@vapewatch.gov"
+          },
+          "notes": "Looks good."
+        }
+      ]
+    },
+    {
+      "report_id": "23df20ea-882c-43c3-8c5f-9e68921fe76a",
+      "submitted_at": "2025-11-01T10:20:51.984168",
+      "status": "ARCHIVED",
+      "notes": "Presentation seed report #25",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_25.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/23df20ea-882c-43c3-8c5f-9e68921fe76a.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/23df20ea-882c-43c3-8c5f-9e68921fe76a.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3081798090268828,
+        "longitude": 103.84255123184768
+      },
+      "audit": {
+        "status": "REJECTED",
+        "timestamp": "2025-11-01T10:22:51.984168",
+        "officer": {
+          "name": "Officer 5",
+          "email": "officer5@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "REJECTED",
+          "timestamp": "2025-11-01T10:22:51.984168",
+          "officer": {
+            "name": "Officer 5",
+            "email": "officer5@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "12d99447-62fe-4601-bbd1-0643d0a029f1",
+      "submitted_at": "2025-11-01T10:13:51.984168",
+      "status": "IN_PROGRESS",
+      "notes": "Presentation seed report #26",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_26.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/12d99447-62fe-4601-bbd1-0643d0a029f1.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/12d99447-62fe-4601-bbd1-0643d0a029f1.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.325616108433122,
+        "longitude": 103.85566862637114
+      },
+      "audit": null,
+      "audit_history": []
+    },
+    {
+      "report_id": "fd78425a-4c5b-4793-bdcc-75fdc55354c0",
+      "submitted_at": "2025-11-01T10:06:51.984168",
+      "status": "PENDING_REVIEW",
+      "notes": "Presentation seed report #27",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_27.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/fd78425a-4c5b-4793-bdcc-75fdc55354c0.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/fd78425a-4c5b-4793-bdcc-75fdc55354c0.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3203782010039375,
+        "longitude": 103.83816844165102
+      },
+      "audit": null,
+      "audit_history": []
+    },
+    {
+      "report_id": "85be5106-06b7-4e32-a80c-810aff55d661",
+      "submitted_at": "2025-11-01T09:59:51.984168",
+      "status": "RESOLVED",
+      "notes": "Presentation seed report #28",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_28.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/85be5106-06b7-4e32-a80c-810aff55d661.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/85be5106-06b7-4e32-a80c-810aff55d661.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.313304064377256,
+        "longitude": 103.82903722755827
+      },
+      "audit": {
+        "status": "APPROVED",
+        "timestamp": "2025-11-01T10:01:51.984168",
+        "officer": {
+          "name": "Officer 3",
+          "email": "officer3@vapewatch.gov"
+        },
+        "notes": "Looks good."
+      },
+      "audit_history": [
+        {
+          "status": "APPROVED",
+          "timestamp": "2025-11-01T10:01:51.984168",
+          "officer": {
+            "name": "Officer 3",
+            "email": "officer3@vapewatch.gov"
+          },
+          "notes": "Looks good."
+        }
+      ]
+    },
+    {
+      "report_id": "6e2d778b-d17d-491e-8c24-9c1d85baa695",
+      "submitted_at": "2025-11-01T09:52:51.984168",
+      "status": "IN_PROGRESS",
+      "notes": "Presentation seed report #29",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_29.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/6e2d778b-d17d-491e-8c24-9c1d85baa695.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/6e2d778b-d17d-491e-8c24-9c1d85baa695.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.338015320401911,
+        "longitude": 103.850256083123
+      },
+      "audit": {
+        "status": "REJECTED",
+        "timestamp": "2025-11-01T09:54:51.984168",
+        "officer": {
+          "name": "Officer 4",
+          "email": "officer4@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "REJECTED",
+          "timestamp": "2025-11-01T09:54:51.984168",
+          "officer": {
+            "name": "Officer 4",
+            "email": "officer4@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "6c2335b1-7aac-4a73-8b1f-0eb7f6f4b911",
+      "submitted_at": "2025-11-01T09:45:51.984168",
+      "status": "PENDING_REVIEW",
+      "notes": "Presentation seed report #30",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_30.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/6c2335b1-7aac-4a73-8b1f-0eb7f6f4b911.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/6c2335b1-7aac-4a73-8b1f-0eb7f6f4b911.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3020492180605776,
+        "longitude": 103.81198007995538
+      },
+      "audit": {
+        "status": "NEEDS_REVIEW",
+        "timestamp": "2025-11-01T09:47:51.984168",
+        "officer": {
+          "name": "Officer 5",
+          "email": "officer5@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "NEEDS_REVIEW",
+          "timestamp": "2025-11-01T09:47:51.984168",
+          "officer": {
+            "name": "Officer 5",
+            "email": "officer5@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "af37aeca-bc46-404a-85ee-891846aba216",
+      "submitted_at": "2025-11-01T09:38:51.984168",
+      "status": "IN_PROGRESS",
+      "notes": "Presentation seed report #31",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_31.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/af37aeca-bc46-404a-85ee-891846aba216.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/af37aeca-bc46-404a-85ee-891846aba216.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3119822912017025,
+        "longitude": 103.81370252669367
+      },
+      "audit": null,
+      "audit_history": []
+    },
+    {
+      "report_id": "a051c91b-12a9-443e-9187-44bff7ae96e9",
+      "submitted_at": "2025-11-01T09:31:51.984168",
+      "status": "PENDING_REVIEW",
+      "notes": "Presentation seed report #32",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_32.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/a051c91b-12a9-443e-9187-44bff7ae96e9.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/a051c91b-12a9-443e-9187-44bff7ae96e9.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3255130539175217,
+        "longitude": 103.82721950855608
+      },
+      "audit": null,
+      "audit_history": []
+    },
+    {
+      "report_id": "f2014166-ebe6-449d-a8c5-2a787385254e",
+      "submitted_at": "2025-11-01T09:24:51.984168",
+      "status": "PENDING_REVIEW",
+      "notes": "Presentation seed report #33",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_33.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/f2014166-ebe6-449d-a8c5-2a787385254e.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/f2014166-ebe6-449d-a8c5-2a787385254e.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3092203907351314,
+        "longitude": 103.81214296565199
+      },
+      "audit": {
+        "status": "REJECTED",
+        "timestamp": "2025-11-01T09:26:51.984168",
+        "officer": {
+          "name": "Officer 3",
+          "email": "officer3@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "REJECTED",
+          "timestamp": "2025-11-01T09:26:51.984168",
+          "officer": {
+            "name": "Officer 3",
+            "email": "officer3@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "e774d474-efbb-4703-9bcc-9d4454334361",
+      "submitted_at": "2025-11-01T09:17:51.984168",
+      "status": "PENDING_REVIEW",
+      "notes": "Presentation seed report #34",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_34.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/e774d474-efbb-4703-9bcc-9d4454334361.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/e774d474-efbb-4703-9bcc-9d4454334361.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3188064559016515,
+        "longitude": 103.8025421680815
+      },
+      "audit": {
+        "status": "NEEDS_REVIEW",
+        "timestamp": "2025-11-01T09:19:51.984168",
+        "officer": {
+          "name": "Officer 4",
+          "email": "officer4@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "NEEDS_REVIEW",
+          "timestamp": "2025-11-01T09:19:51.984168",
+          "officer": {
+            "name": "Officer 4",
+            "email": "officer4@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "eeb49ab7-105a-4dab-ae8b-7e8d668183f3",
+      "submitted_at": "2025-11-01T09:10:51.984168",
+      "status": "IN_PROGRESS",
+      "notes": "Presentation seed report #35",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_35.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/eeb49ab7-105a-4dab-ae8b-7e8d668183f3.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/eeb49ab7-105a-4dab-ae8b-7e8d668183f3.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3061283345708425,
+        "longitude": 103.82400016412059
+      },
+      "audit": {
+        "status": "NEEDS_REVIEW",
+        "timestamp": "2025-11-01T09:12:51.984168",
+        "officer": {
+          "name": "Officer 5",
+          "email": "officer5@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "NEEDS_REVIEW",
+          "timestamp": "2025-11-01T09:12:51.984168",
+          "officer": {
+            "name": "Officer 5",
+            "email": "officer5@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "af28d49a-2f13-48b8-8984-27c64ace29fd",
+      "submitted_at": "2025-11-01T09:03:51.984168",
+      "status": "PENDING_REVIEW",
+      "notes": "Presentation seed report #36",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_36.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/af28d49a-2f13-48b8-8984-27c64ace29fd.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/af28d49a-2f13-48b8-8984-27c64ace29fd.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3301070315123442,
+        "longitude": 103.85268284918374
+      },
+      "audit": {
+        "status": "NEEDS_REVIEW",
+        "timestamp": "2025-11-01T09:05:51.984168",
+        "officer": {
+          "name": "Officer 1",
+          "email": "officer1@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "NEEDS_REVIEW",
+          "timestamp": "2025-11-01T09:05:51.984168",
+          "officer": {
+            "name": "Officer 1",
+            "email": "officer1@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "ad394650-70c9-4836-be35-f7d787a0961b",
+      "submitted_at": "2025-11-01T08:56:51.984168",
+      "status": "IN_PROGRESS",
+      "notes": "Presentation seed report #37",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_37.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/ad394650-70c9-4836-be35-f7d787a0961b.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/ad394650-70c9-4836-be35-f7d787a0961b.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.321682169221489,
+        "longitude": 103.80216324493286
+      },
+      "audit": {
+        "status": "APPROVED",
+        "timestamp": "2025-11-01T08:58:51.984168",
+        "officer": {
+          "name": "Officer 2",
+          "email": "officer2@vapewatch.gov"
+        },
+        "notes": "Looks good."
+      },
+      "audit_history": [
+        {
+          "status": "APPROVED",
+          "timestamp": "2025-11-01T08:58:51.984168",
+          "officer": {
+            "name": "Officer 2",
+            "email": "officer2@vapewatch.gov"
+          },
+          "notes": "Looks good."
+        }
+      ]
+    },
+    {
+      "report_id": "a4fcf709-9505-432c-b326-d2ca8d9dc796",
+      "submitted_at": "2025-11-01T08:49:51.984168",
+      "status": "PENDING_REVIEW",
+      "notes": "Presentation seed report #38",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_38.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/a4fcf709-9505-432c-b326-d2ca8d9dc796.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/a4fcf709-9505-432c-b326-d2ca8d9dc796.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3037029978348462,
+        "longitude": 103.8130309758967
+      },
+      "audit": {
+        "status": "REJECTED",
+        "timestamp": "2025-11-01T08:51:51.984168",
+        "officer": {
+          "name": "Officer 3",
+          "email": "officer3@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "REJECTED",
+          "timestamp": "2025-11-01T08:51:51.984168",
+          "officer": {
+            "name": "Officer 3",
+            "email": "officer3@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "c14f4a06-7109-4d0c-8433-8f792aceaa19",
+      "submitted_at": "2025-11-01T08:42:51.984168",
+      "status": "RESOLVED",
+      "notes": "Presentation seed report #39",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_39.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/c14f4a06-7109-4d0c-8433-8f792aceaa19.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/c14f4a06-7109-4d0c-8433-8f792aceaa19.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.309933481087695,
+        "longitude": 103.80350887899091
+      },
+      "audit": {
+        "status": "NEEDS_REVIEW",
+        "timestamp": "2025-11-01T08:44:51.984168",
+        "officer": {
+          "name": "Officer 4",
+          "email": "officer4@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "NEEDS_REVIEW",
+          "timestamp": "2025-11-01T08:44:51.984168",
+          "officer": {
+            "name": "Officer 4",
+            "email": "officer4@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "8684093a-a5d4-4691-bada-dcc2e048588b",
+      "submitted_at": "2025-11-01T08:35:51.984168",
+      "status": "PENDING_REVIEW",
+      "notes": "Presentation seed report #40",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_40.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/8684093a-a5d4-4691-bada-dcc2e048588b.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/8684093a-a5d4-4691-bada-dcc2e048588b.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3166571040772723,
+        "longitude": 103.80570322758793
+      },
+      "audit": {
+        "status": "NEEDS_REVIEW",
+        "timestamp": "2025-11-01T08:37:51.984168",
+        "officer": {
+          "name": "Officer 5",
+          "email": "officer5@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "NEEDS_REVIEW",
+          "timestamp": "2025-11-01T08:37:51.984168",
+          "officer": {
+            "name": "Officer 5",
+            "email": "officer5@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "4adc0062-54e1-4a59-a618-d736fa448444",
+      "submitted_at": "2025-11-01T08:28:51.984168",
+      "status": "ARCHIVED",
+      "notes": "Presentation seed report #41",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_41.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/4adc0062-54e1-4a59-a618-d736fa448444.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/4adc0062-54e1-4a59-a618-d736fa448444.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3263013387521352,
+        "longitude": 103.80798804675952
+      },
+      "audit": null,
+      "audit_history": []
+    },
+    {
+      "report_id": "902fd32e-9f78-4ee7-ab0a-b6281f19e932",
+      "submitted_at": "2025-11-01T08:21:51.984168",
+      "status": "ARCHIVED",
+      "notes": "Presentation seed report #42",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_42.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/902fd32e-9f78-4ee7-ab0a-b6281f19e932.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/902fd32e-9f78-4ee7-ab0a-b6281f19e932.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3225713742655905,
+        "longitude": 103.80410978157413
+      },
+      "audit": {
+        "status": "APPROVED",
+        "timestamp": "2025-11-01T08:23:51.984168",
+        "officer": {
+          "name": "Officer 2",
+          "email": "officer2@vapewatch.gov"
+        },
+        "notes": "Looks good."
+      },
+      "audit_history": [
+        {
+          "status": "APPROVED",
+          "timestamp": "2025-11-01T08:23:51.984168",
+          "officer": {
+            "name": "Officer 2",
+            "email": "officer2@vapewatch.gov"
+          },
+          "notes": "Looks good."
+        }
+      ]
+    },
+    {
+      "report_id": "c4f7e985-240b-49b1-a804-ef8051d3933d",
+      "submitted_at": "2025-11-01T08:14:51.984168",
+      "status": "PENDING_REVIEW",
+      "notes": "Presentation seed report #43",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_43.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/c4f7e985-240b-49b1-a804-ef8051d3933d.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/c4f7e985-240b-49b1-a804-ef8051d3933d.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3133311768993268,
+        "longitude": 103.83154239626542
+      },
+      "audit": {
+        "status": "APPROVED",
+        "timestamp": "2025-11-01T08:16:51.984168",
+        "officer": {
+          "name": "Officer 3",
+          "email": "officer3@vapewatch.gov"
+        },
+        "notes": "Looks good."
+      },
+      "audit_history": [
+        {
+          "status": "APPROVED",
+          "timestamp": "2025-11-01T08:16:51.984168",
+          "officer": {
+            "name": "Officer 3",
+            "email": "officer3@vapewatch.gov"
+          },
+          "notes": "Looks good."
+        }
+      ]
+    },
+    {
+      "report_id": "08f4808c-5d11-4540-b90b-567699494c8f",
+      "submitted_at": "2025-11-01T08:07:51.984168",
+      "status": "RESOLVED",
+      "notes": "Presentation seed report #44",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_44.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/08f4808c-5d11-4540-b90b-567699494c8f.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/08f4808c-5d11-4540-b90b-567699494c8f.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3103985526034319,
+        "longitude": 103.84077912152661
+      },
+      "audit": {
+        "status": "NEEDS_REVIEW",
+        "timestamp": "2025-11-01T08:09:51.984168",
+        "officer": {
+          "name": "Officer 4",
+          "email": "officer4@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "NEEDS_REVIEW",
+          "timestamp": "2025-11-01T08:09:51.984168",
+          "officer": {
+            "name": "Officer 4",
+            "email": "officer4@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "3eabdb23-aacb-4521-ba64-3c5c8d4ef903",
+      "submitted_at": "2025-11-01T08:00:51.984168",
+      "status": "IN_PROGRESS",
+      "notes": "Presentation seed report #45",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_45.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/3eabdb23-aacb-4521-ba64-3c5c8d4ef903.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/3eabdb23-aacb-4521-ba64-3c5c8d4ef903.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.320534953614235,
+        "longitude": 103.80893140266303
+      },
+      "audit": {
+        "status": "NEEDS_REVIEW",
+        "timestamp": "2025-11-01T08:02:51.984168",
+        "officer": {
+          "name": "Officer 5",
+          "email": "officer5@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "NEEDS_REVIEW",
+          "timestamp": "2025-11-01T08:02:51.984168",
+          "officer": {
+            "name": "Officer 5",
+            "email": "officer5@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "33a5cb8e-af5d-44d6-ba54-cf3584e407a0",
+      "submitted_at": "2025-11-01T07:53:51.984168",
+      "status": "RESOLVED",
+      "notes": "Presentation seed report #46",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_46.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/33a5cb8e-af5d-44d6-ba54-cf3584e407a0.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/33a5cb8e-af5d-44d6-ba54-cf3584e407a0.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3032436821778832,
+        "longitude": 103.84956306067069
+      },
+      "audit": null,
+      "audit_history": []
+    },
+    {
+      "report_id": "2b88273c-9e9a-4f22-9e20-1635ef810c9f",
+      "submitted_at": "2025-11-01T07:46:51.984168",
+      "status": "IN_PROGRESS",
+      "notes": "Presentation seed report #47",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_47.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/2b88273c-9e9a-4f22-9e20-1635ef810c9f.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/2b88273c-9e9a-4f22-9e20-1635ef810c9f.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.308586258342613,
+        "longitude": 103.85265238748566
+      },
+      "audit": {
+        "status": "NEEDS_REVIEW",
+        "timestamp": "2025-11-01T07:48:51.984168",
+        "officer": {
+          "name": "Officer 2",
+          "email": "officer2@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "NEEDS_REVIEW",
+          "timestamp": "2025-11-01T07:48:51.984168",
+          "officer": {
+            "name": "Officer 2",
+            "email": "officer2@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    },
+    {
+      "report_id": "c2754ab7-7c26-4383-af73-da602e52cdab",
+      "submitted_at": "2025-11-01T07:39:51.984168",
+      "status": "RESOLVED",
+      "notes": "Presentation seed report #48",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_48.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/c2754ab7-7c26-4383-af73-da602e52cdab.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/c2754ab7-7c26-4383-af73-da602e52cdab.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3090428228477164,
+        "longitude": 103.80842829216498
+      },
+      "audit": null,
+      "audit_history": []
+    },
+    {
+      "report_id": "4a801dfd-7b8f-4be6-b4ef-bfa13d145215",
+      "submitted_at": "2025-11-01T07:32:51.984168",
+      "status": "RESOLVED",
+      "notes": "Presentation seed report #49",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_49.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/4a801dfd-7b8f-4be6-b4ef-bfa13d145215.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/4a801dfd-7b8f-4be6-b4ef-bfa13d145215.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3073758527793298,
+        "longitude": 103.83563256503355
+      },
+      "audit": {
+        "status": "APPROVED",
+        "timestamp": "2025-11-01T07:34:51.984168",
+        "officer": {
+          "name": "Officer 4",
+          "email": "officer4@vapewatch.gov"
+        },
+        "notes": "Looks good."
+      },
+      "audit_history": [
+        {
+          "status": "APPROVED",
+          "timestamp": "2025-11-01T07:34:51.984168",
+          "officer": {
+            "name": "Officer 4",
+            "email": "officer4@vapewatch.gov"
+          },
+          "notes": "Looks good."
+        }
+      ]
+    },
+    {
+      "report_id": "d8182c9a-310a-4e98-899f-a0c6053b874f",
+      "submitted_at": "2025-11-01T07:25:51.984168",
+      "status": "RESOLVED",
+      "notes": "Presentation seed report #50",
+      "content_type": "image/jpeg",
+      "filename": "presentation_sample_50.jpg",
+      "raw_object_bucket": "presentation-bucket",
+      "raw_object_key": "demo/d8182c9a-310a-4e98-899f-a0c6053b874f.jpg",
+      "assets": {
+        "raw": {
+          "bucket": "presentation-bucket",
+          "key": "demo/d8182c9a-310a-4e98-899f-a0c6053b874f.jpg"
+        }
+      },
+      "location": {
+        "latitude": 1.3128298872789195,
+        "longitude": 103.8093158173917
+      },
+      "audit": {
+        "status": "NEEDS_REVIEW",
+        "timestamp": "2025-11-01T07:27:51.984168",
+        "officer": {
+          "name": "Officer 5",
+          "email": "officer5@vapewatch.gov"
+        },
+        "notes": "Reviewed during dry run."
+      },
+      "audit_history": [
+        {
+          "status": "NEEDS_REVIEW",
+          "timestamp": "2025-11-01T07:27:51.984168",
+          "officer": {
+            "name": "Officer 5",
+            "email": "officer5@vapewatch.gov"
+          },
+          "notes": "Reviewed during dry run."
+        }
+      ]
+    }
+  ]
+}

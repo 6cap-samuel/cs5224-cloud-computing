@@ -1,0 +1,25 @@
+{
+  "parks": [
+    {
+      "id": "PK-001",
+      "name": "Bishan-Ang Mo Kio Park",
+      "type": "Regional Park",
+      "latitude": 1.3636,
+      "longitude": 103.8485
+    },
+    {
+      "id": "PK-002",
+      "name": "Pasir Ris Park",
+      "type": "Beach Park",
+      "latitude": 1.3816,
+      "longitude": 103.9405
+    },
+    {
+      "id": "PK-003",
+      "name": "Jurong Lake Gardens",
+      "type": "National Gardens",
+      "latitude": 1.3336,
+      "longitude": 103.7222
+    }
+  ]
+}

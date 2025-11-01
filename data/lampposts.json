@@ -1,0 +1,22 @@
+{
+  "lampposts": [
+    {
+      "id": "LP-NE-001",
+      "name": "North Entrance Lamppost",
+      "latitude": 1.352083,
+      "longitude": 103.819836
+    },
+    {
+      "id": "LP-NE-002",
+      "name": "Courtyard Lamppost",
+      "latitude": 1.353211,
+      "longitude": 103.823002
+    },
+    {
+      "id": "LP-NE-003",
+      "name": "Sports Hall Lamppost",
+      "latitude": 1.34972,
+      "longitude": 103.82241
+    }
+  ]
+}

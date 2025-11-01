@@ -71,6 +71,54 @@ def _prepare_location(location) -> dict | None:
     return loc
 
 
+def _prepare_location_context(context) -> dict | None:
+    if not isinstance(context, dict):
+        return None
+
+    context_map: dict[str, object] = {}
+
+    lamppost = context.get("nearest_lamppost")
+    if isinstance(lamppost, dict):
+        nearest = _strip_none(
+            {
+                "id": _clean_string(lamppost.get("id"), 120),
+                "name": _clean_string(lamppost.get("name"), 255),
+            }
+        )
+        distance = _safe_decimal(lamppost.get("distance_m"), precision=2)
+        if distance is not None and distance >= 0:
+            nearest["distance_m"] = distance
+        lat = _safe_decimal(lamppost.get("latitude"), precision=6)
+        lon = _safe_decimal(lamppost.get("longitude"), precision=6)
+        if lat is not None and lon is not None:
+            nearest["latitude"] = lat
+            nearest["longitude"] = lon
+        if nearest:
+            context_map["nearest_lamppost"] = nearest
+
+    park = context.get("nearest_park")
+    if isinstance(park, dict):
+        park_info = _strip_none(
+            {
+                "id": _clean_string(park.get("id"), 120),
+                "name": _clean_string(park.get("name"), 255),
+                "type": _clean_string(park.get("type"), 120),
+            }
+        )
+        distance = _safe_decimal(park.get("distance_m"), precision=2)
+        if distance is not None and distance >= 0:
+            park_info["distance_m"] = distance
+        lat = _safe_decimal(park.get("latitude"), precision=6)
+        lon = _safe_decimal(park.get("longitude"), precision=6)
+        if lat is not None and lon is not None:
+            park_info["latitude"] = lat
+            park_info["longitude"] = lon
+        if park_info:
+            context_map["nearest_park"] = park_info
+
+    return context_map or None
+
+
 def _prepare_weather(snapshot) -> dict | None:
     if not isinstance(snapshot, dict):
         return None
@@ -177,6 +225,7 @@ def lambda_handler(event, ctx):
 
     location = _prepare_location(event.get("location"))
     weather_snapshot = _prepare_weather(event.get("weather_snapshot"))
+    location_context = _prepare_location_context(event.get("location_context"))
 
     item = {
         "report_id": report_id,
@@ -191,6 +240,7 @@ def lambda_handler(event, ctx):
         "ingest_error": _clean_string(event.get("ingest_error"), 64),
         "location": location,
         "weather_snapshot": weather_snapshot,
+        "location_context": location_context,
     }
 
     # DynamoDB does not allow empty map attributes.
@@ -227,6 +277,38 @@ def lambda_handler(event, ctx):
         }
         if "captured_at" in location:
             event["location"]["captured_at"] = location["captured_at"]
+    if location_context:
+        context_payload: dict[str, dict] = {}
+        lamppost = location_context.get("nearest_lamppost")
+        if lamppost:
+            lamp_payload = {
+                k: lamppost[k]
+                for k in ("id", "name")
+                if k in lamppost
+            }
+            if "distance_m" in lamppost:
+                lamp_payload["distance_m"] = float(lamppost["distance_m"])
+            if "latitude" in lamppost and "longitude" in lamppost:
+                lamp_payload["latitude"] = float(lamppost["latitude"])
+                lamp_payload["longitude"] = float(lamppost["longitude"])
+            if lamp_payload:
+                context_payload["nearest_lamppost"] = lamp_payload
+        park = location_context.get("nearest_park")
+        if park:
+            park_payload = {
+                k: park[k]
+                for k in ("id", "name", "type")
+                if k in park
+            }
+            if "distance_m" in park:
+                park_payload["distance_m"] = float(park["distance_m"])
+            if "latitude" in park and "longitude" in park:
+                park_payload["latitude"] = float(park["latitude"])
+                park_payload["longitude"] = float(park["longitude"])
+            if park_payload:
+                context_payload["nearest_park"] = park_payload
+        if context_payload:
+            event["location_context"] = context_payload
     if weather_snapshot:
         event["weather_snapshot"] = weather_snapshot
     return event

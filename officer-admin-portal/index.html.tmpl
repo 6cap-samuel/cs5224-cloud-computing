@@ -370,9 +370,50 @@
     }
 
     .card h2 {
-      margin: 0;
+      margin: 0.75rem 0 0;
       font-size: 1rem;
       letter-spacing: 0.02em;
+    }
+
+    .card.card-compact {
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .card.card-compact:hover,
+    .card.card-compact:focus-within {
+      transform: translateY(-2px);
+      box-shadow: 0 28px 45px rgba(15, 23, 42, 0.45);
+    }
+
+    .card-badge {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      background: rgba(34, 197, 94, 0.85);
+      color: #0f172a;
+      font-size: 0.72rem;
+      font-weight: 600;
+      padding: 0.25rem 0.55rem;
+      border-radius: 999px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .card-badge[data-status="REJECTED"] {
+      background: rgba(248, 113, 113, 0.85);
+      color: #1f2937;
+    }
+
+    .card-badge[data-status="NEEDS_REVIEW"] {
+      background: rgba(251, 191, 36, 0.9);
+      color: #1f2937;
+    }
+
+    .card-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 0.5rem;
     }
 
     .weather-card {
@@ -507,6 +548,127 @@
 
     .report-weather-areas li + li {
       margin-top: 0.2rem;
+    }
+
+    .report-context {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.75rem;
+      font-size: 0.85rem;
+    }
+
+    .report-context h3 {
+      margin: 0;
+      font-size: 0.9rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .report-context p {
+      margin: 0;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+    }
+
+    .report-context small {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-backdrop[data-open="true"] {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      max-width: 720px;
+      width: 100%;
+      background: rgba(15, 23, 42, 0.92);
+      border-radius: 18px;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      box-shadow: 0 30px 80px rgba(15, 23, 42, 0.55);
+      display: flex;
+      flex-direction: column;
+      max-height: 90vh;
+      overflow: hidden;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      letter-spacing: 0.04em;
+    }
+
+    .modal-close {
+      appearance: none;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 0.25rem;
+      border-radius: 999px;
+      transition: color 0.15s ease, background 0.15s ease;
+    }
+
+    .modal-close:hover,
+    .modal-close:focus {
+      color: var(--text-primary);
+      background: rgba(148, 163, 184, 0.18);
+      outline: none;
+    }
+
+    .modal-body {
+      overflow-y: auto;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid rgba(148, 163, 184, 0.2);
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .modal-footer .button {
+      background: rgba(148, 163, 184, 0.25);
+      color: var(--text-primary);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+    }
+
+    .modal-footer .button:hover {
+      box-shadow: none;
+      transform: translateY(-1px);
     }
 
     .preview {
@@ -657,17 +819,29 @@
       <div class="map-panel" aria-labelledby="map-title">
         <div class="map-toolbar">
           <h2 id="map-title">Report map</h2>
-          <div id="map-status" class="map-status" role="status" aria-live="polite"></div>
-        </div>
-        <div class="map-canvas">
-          <div id="reports-map" role="img" aria-label="Map showing report locations"></div>
-        </div>
-      </div>
-      <section id="results" class="grid" aria-live="polite" aria-busy="false"></section>
-      <div id="empty-state" class="empty" hidden>No reports available yet. Submissions will appear here automatically.</div>
-    </section>
-  </main>
-  <footer>Restricted access: For authorised VapeWatch officers only.</footer>
+      <div id="map-status" class="map-status" role="status" aria-live="polite"></div>
+    </div>
+    <div class="map-canvas">
+      <div id="reports-map" role="img" aria-label="Map showing report locations"></div>
+    </div>
+  </div>
+  <section id="results" class="grid" aria-live="polite" aria-busy="false"></section>
+  <div id="empty-state" class="empty" hidden>No reports available yet. Submissions will appear here automatically.</div>
+</section>
+</main>
+<div id="report-modal-backdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="report-modal-title" hidden>
+  <div class="modal-card">
+    <header class="modal-header">
+      <h2 id="report-modal-title">Report details</h2>
+      <button id="report-modal-close" class="modal-close" type="button" aria-label="Close report details">×</button>
+    </header>
+    <div id="report-modal-body" class="modal-body"></div>
+    <footer class="modal-footer">
+      <button id="report-modal-dismiss" class="button button-ghost" type="button">Close</button>
+    </footer>
+  </div>
+</div>
+<footer>Restricted access: For authorised VapeWatch officers only.</footer>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script>
     const API_BASE_URL = "${api_base_url}";
@@ -707,6 +881,10 @@
     const weatherStatusEl = document.getElementById("weather-status");
     const weatherValidityEl = document.getElementById("weather-validity");
     const weatherGroupsEl = document.getElementById("weather-groups");
+    const reportModalBackdrop = document.getElementById("report-modal-backdrop");
+    const reportModalBody = document.getElementById("report-modal-body");
+    const reportModalCloseBtn = document.getElementById("report-modal-close");
+    const reportModalDismissBtn = document.getElementById("report-modal-dismiss");
 
     const MAP_DEFAULT_CENTER = [0, 0];
     const MAP_DEFAULT_ZOOM = 2;
@@ -731,9 +909,113 @@
     let refreshPromise = null;
     let mapInstance = null;
     let mapMarkersLayer = null;
+    let lamppostLayer = null;
+    let parkLayer = null;
     let mapBounds = null;
     const mapMarkerRefs = new Map();
+    const lamppostMarkerRefs = new Map();
+    const parkMarkerRefs = new Map();
+    let activeReport = null;
+    let lastFocusedElement = null;
+    const reportCardRefs = new Map();
+    const auditHistoryCache = new Map();
+
+    const AUDIT_STATUSES = [
+      { value: "APPROVED", label: "Accurate evidence" },
+      { value: "REJECTED", label: "Incorrect / Not vaping" },
+      { value: "NEEDS_REVIEW", label: "Needs further review" }
+    ];
+    const AUDIT_STATUS_LABELS = AUDIT_STATUSES.reduce(function (map, entry) {
+      map[entry.value] = entry.label;
+      return map;
+    }, {});
     let weatherRefreshTimer = null;
+
+    function getAuditHistoryState(reportId) {
+      if (!reportId) {
+        return null;
+      }
+      if (!auditHistoryCache.has(reportId)) {
+        auditHistoryCache.set(reportId, {
+          items: [],
+          nextCursor: null,
+          totalCount: 0,
+          loading: false,
+          initialized: false,
+          error: null
+        });
+      }
+      return auditHistoryCache.get(reportId);
+    }
+
+    function resetAuditHistoryState(reportId) {
+      if (!reportId) {
+        return;
+      }
+      auditHistoryCache.delete(reportId);
+    }
+
+    async function loadAuditHistory(report, options) {
+      if (!report || !report.report_id || !report.submitted_at) {
+        return;
+      }
+      const state = getAuditHistoryState(report.report_id);
+      if (!state || state.loading) {
+        return;
+      }
+      const reset = Boolean(options && options.reset);
+      if (!reset && state.nextCursor == null && state.initialized) {
+        return;
+      }
+
+      state.loading = true;
+      state.error = null;
+      const params = new URLSearchParams({
+        submitted_at: report.submitted_at,
+        limit: "10"
+      });
+      if (!reset && state.nextCursor != null) {
+        params.set("cursor", String(state.nextCursor));
+      }
+
+      try {
+        const auth = await ensureAuthenticated();
+        const response = await fetch(
+          API_BASE_URL + "/reports/" + encodeURIComponent(report.report_id) + "/history?" + params.toString(),
+          {
+            headers: {
+              Authorization: "Bearer " + auth.idToken
+            }
+          }
+        );
+        if (response.status === 401 || response.status === 403) {
+          throw new Error("not_authorised");
+        }
+        if (!response.ok) {
+          throw new Error("HTTP " + response.status);
+        }
+        const data = await response.json();
+        const fetched = Array.isArray(data.items) ? data.items : [];
+        if (reset) {
+          state.items = fetched;
+        } else {
+          state.items = state.items.concat(fetched);
+        }
+        state.nextCursor = data.next_cursor != null ? data.next_cursor : null;
+        state.totalCount = typeof data.total_count === "number" ? data.total_count : state.items.length;
+        state.initialized = true;
+      } catch (error) {
+        console.error("Failed to load audit history", error);
+        if (error && error.message === "not_authorised") {
+          state.error = "Current session cannot load audit history.";
+        } else {
+          state.error = "Unable to load history.";
+        }
+      } finally {
+        state.loading = false;
+        refreshReportModal();
+      }
+    }
 
     function setStatus(message, variant) {
       statusEl.textContent = message || "";
@@ -1128,6 +1410,8 @@
           attribution: "© OpenStreetMap contributors"
         }).addTo(mapInstance);
         mapMarkersLayer = L.layerGroup().addTo(mapInstance);
+        lamppostLayer = L.layerGroup().addTo(mapInstance);
+        parkLayer = L.layerGroup().addTo(mapInstance);
         mapBounds = null;
         mapInstance.setView(MAP_DEFAULT_CENTER, MAP_DEFAULT_ZOOM);
         setTimeout(function () {
@@ -1143,7 +1427,15 @@
       if (mapMarkersLayer) {
         mapMarkersLayer.clearLayers();
       }
+      if (lamppostLayer) {
+        lamppostLayer.clearLayers();
+      }
+      if (parkLayer) {
+        parkLayer.clearLayers();
+      }
       mapMarkerRefs.clear();
+      lamppostMarkerRefs.clear();
+      parkMarkerRefs.clear();
       mapBounds = null;
       if (mapInstance) {
         mapInstance.setView(MAP_DEFAULT_CENTER, MAP_DEFAULT_ZOOM);
@@ -1187,6 +1479,9 @@
       if (locationText && locationText !== "Not attached") {
         metaLines.push(locationText);
       }
+      if (report && report.audit && report.audit.status) {
+        metaLines.push("Audit: " + formatAuditStatus(report.audit.status));
+      }
 
       const meta = document.createElement("div");
       meta.className = "map-popup-meta";
@@ -1209,6 +1504,77 @@
       }
 
       return container;
+    }
+
+    function buildContextPopup(type, entry, report) {
+      const lines = [];
+      if (type === "lamppost") {
+        lines.push(entry.name || entry.id || "Lamppost");
+      } else if (type === "park") {
+        lines.push(entry.name || "Park");
+        if (entry.type) {
+          lines.push(entry.type);
+        }
+      }
+      const distance = typeof entry.distance_m === "number" && isFinite(entry.distance_m)
+        ? entry.distance_m >= 1000 ? (entry.distance_m / 1000).toFixed(2) + " km" : entry.distance_m.toFixed(1) + " m"
+        : null;
+      if (distance) {
+        lines.push("Distance: " + distance);
+      }
+      if (report && report.report_id) {
+        lines.push("Related report " + report.report_id);
+      }
+      return lines.join("<br>");
+    }
+
+    function addContextMarker(type, entry, options) {
+      if (!entry || typeof entry !== "object") {
+        return null;
+      }
+      const lat = parseCoordinate(entry.latitude);
+      const lng = parseCoordinate(entry.longitude);
+      if (lat === null || lng === null) {
+        return null;
+      }
+      const map = ensureMap();
+      if (!map) {
+        return null;
+      }
+      let layer = null;
+      let refs = null;
+      let color = "#fb923c";
+      if (type === "lamppost") {
+        layer = lamppostLayer;
+        refs = lamppostMarkerRefs;
+        color = "#f97316";
+      } else if (type === "park") {
+        layer = parkLayer;
+        refs = parkMarkerRefs;
+        color = "#22c55e";
+      }
+      if (!layer || !refs) {
+        return null;
+      }
+      const key = entry.id ? type + ":" + entry.id : type + ":" + lat.toFixed(6) + "," + lng.toFixed(6);
+      if (refs.has(key)) {
+        return refs.get(key);
+      }
+      const marker = L.circleMarker([lat, lng], {
+        radius: type === "lamppost" ? 5 : 6,
+        color: color,
+        weight: 1,
+        fillColor: color,
+        fillOpacity: 0.85,
+        opacity: 0.9
+      });
+      const popup = buildContextPopup(type, entry, options && options.report);
+      if (popup) {
+        marker.bindPopup(popup);
+      }
+      marker.addTo(layer);
+      refs.set(key, marker);
+      return marker;
     }
 
     function plotReportOnMap(report) {
@@ -1241,6 +1607,16 @@
         mapBounds = L.latLngBounds(latLng, latLng);
       } else {
         mapBounds.extend(latLng);
+      }
+      if (report && report.location_context) {
+        const lamppostMarker = addContextMarker("lamppost", report.location_context.nearest_lamppost, { report: report });
+        if (lamppostMarker && mapBounds) {
+          mapBounds.extend(lamppostMarker.getLatLng());
+        }
+        const parkMarker = addContextMarker("park", report.location_context.nearest_park, { report: report });
+        if (parkMarker && mapBounds) {
+          mapBounds.extend(parkMarker.getLatLng());
+        }
       }
       return true;
     }
@@ -1405,58 +1781,678 @@
       return section;
     }
 
-    function renderReportCard(report) {
-      const card = document.createElement("article");
-      card.className = "card";
+    function summarizeLamppostContext(context) {
+      if (!context || typeof context !== "object") {
+        return null;
+      }
+      const lamppost = context.nearest_lamppost;
+      if (!lamppost || typeof lamppost !== "object") {
+        return null;
+      }
+      const id = lamppost.id ? String(lamppost.id).trim() : "";
+      const name = lamppost.name ? String(lamppost.name).trim() : "";
+      const distance = typeof lamppost.distance_m === "number" && isFinite(lamppost.distance_m)
+        ? Math.max(0, lamppost.distance_m)
+        : null;
 
-      const title = document.createElement("h2");
-      title.textContent = "Report " + (report && report.report_id ? report.report_id : "Unknown");
-      card.appendChild(title);
+      let summary = "";
+      if (name) {
+        summary = name;
+        if (id) {
+          summary += " (" + id + ")";
+        }
+      } else if (id) {
+        summary = "Lamppost " + id;
+      }
 
-      const weatherDetails = report ? summarizeWeatherSnapshot(report.weather_snapshot) : null;
+      if (distance !== null) {
+        const formattedDistance = distance >= 1000
+          ? (distance / 1000).toFixed(2) + " km"
+          : distance.toFixed(1) + " m";
+        summary = summary ? summary + " · " + formattedDistance : formattedDistance;
+      }
+
+      if (!summary) {
+        return null;
+      }
+
+      return {
+        summary: summary,
+        id: id || null,
+        name: name || null,
+        distance_m: distance,
+      };
+    }
+
+    function summarizeParkContext(context) {
+      if (!context || typeof context !== "object") {
+        return null;
+      }
+      const park = context.nearest_park;
+      if (!park || typeof park !== "object") {
+        return null;
+      }
+      const id = park.id ? String(park.id).trim() : "";
+      const name = park.name ? String(park.name).trim() : "";
+      const type = park.type ? String(park.type).trim() : "";
+      const distance = typeof park.distance_m === "number" && isFinite(park.distance_m)
+        ? Math.max(0, park.distance_m)
+        : null;
+
+      let summary = "";
+      if (name) {
+        summary = name;
+        if (type) {
+          summary += " (" + type + ")";
+        }
+      } else if (type) {
+        summary = type + " park";
+      }
+
+      if (distance !== null) {
+        const formattedDistance = distance >= 1000
+          ? (distance / 1000).toFixed(2) + " km"
+          : distance.toFixed(1) + " m";
+        summary = summary ? summary + " · " + formattedDistance : formattedDistance;
+      }
+
+      if (!summary) {
+        return null;
+      }
+
+      return {
+        summary: summary,
+        id: id || null,
+        name: name || null,
+        type: type || null,
+        distance_m: distance,
+      };
+    }
+
+    function formatAuditStatus(status) {
+      if (!status) {
+        return null;
+      }
+      const upper = String(status).toUpperCase();
+      return AUDIT_STATUS_LABELS[upper] || upper.replace(/_/g, " ");
+    }
+
+    function summarizeAudit(audit) {
+      if (!audit || typeof audit !== "object" || !audit.status) {
+        return null;
+      }
+      const parts = [];
+      const label = formatAuditStatus(audit.status);
+      if (label) {
+        parts.push(label);
+      }
+      if (audit.officer) {
+        const officerName = audit.officer.name || audit.officer.email || audit.officer.username || audit.officer.sub;
+        if (officerName) {
+          parts.push("by " + officerName);
+        }
+      }
+      if (audit.timestamp) {
+        const formatted = formatWeatherTimestamp(audit.timestamp);
+        if (formatted) {
+          parts.push(formatted);
+        }
+      }
+      return parts.join(" • ") || null;
+    }
+
+    function buildLamppostSection(context, summaryDetails) {
+      const details = summaryDetails || summarizeLamppostContext(context);
+      if (!details) {
+        return null;
+      }
+      const section = document.createElement("section");
+      section.className = "report-context";
+
+      const heading = document.createElement("h3");
+      heading.textContent = "Nearest lamppost";
+      section.appendChild(heading);
+
+      const content = document.createElement("p");
+      content.textContent = details.summary;
+      section.appendChild(content);
+
+      if (details.id && (!details.name || details.name.indexOf(details.id) === -1)) {
+        const meta = document.createElement("small");
+        meta.textContent = "ID: " + details.id;
+        section.appendChild(meta);
+      }
+
+      return section;
+    }
+
+    function buildParkSection(context, summaryDetails) {
+      const details = summaryDetails || summarizeParkContext(context);
+      if (!details) {
+        return null;
+      }
+      const section = document.createElement("section");
+      section.className = "report-context";
+
+      const heading = document.createElement("h3");
+      heading.textContent = "Nearest park";
+      section.appendChild(heading);
+
+      const content = document.createElement("p");
+      content.textContent = details.summary;
+      section.appendChild(content);
+
+      if (details.id && (!details.name || details.name.indexOf(details.id) === -1)) {
+        const meta = document.createElement("small");
+        meta.textContent = "ID: " + details.id;
+        section.appendChild(meta);
+      }
+
+      return section;
+    }
+
+    function buildNotesSection(report) {
+      if (!report || !report.notes) {
+        return null;
+      }
+      const notes = document.createElement("div");
+      notes.className = "notes";
+      notes.textContent = report.notes;
+      return notes;
+    }
+
+    function buildPreviewSection(report) {
+      if (!report || !report.image_url) {
+        return null;
+      }
+      const preview = document.createElement("div");
+      preview.className = "preview";
+      const img = document.createElement("img");
+      img.src = report.image_url;
+      img.alt = "Evidence for report " + (report.report_id || "");
+      img.loading = "lazy";
+      preview.appendChild(img);
+      return preview;
+    }
+
+    async function submitAudit(reportId, payload) {
+      const auth = await ensureAuthenticated();
+      const response = await fetch(API_BASE_URL + "/reports/" + encodeURIComponent(reportId) + "/audit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + auth.idToken
+        },
+        body: JSON.stringify(payload)
+      });
+      if (response.status === 401 || response.status === 403) {
+        const error = new Error("not_authorised");
+        error.code = "not_authorised";
+        throw error;
+      }
+      if (!response.ok) {
+        let message = "Failed to submit audit.";
+        try {
+          const errorBody = await response.json();
+          if (errorBody && errorBody.error) {
+            message = errorBody.error.replace(/_/g, " ");
+          }
+        } catch (ignore) {
+          // ignore parse errors
+        }
+        const error = new Error(message);
+        error.code = "audit_failed";
+        throw error;
+      }
+      const data = await response.json();
+      if (data && data.report) {
+        return data.report;
+      }
+      return data;
+    }
+
+    function buildAuditHistory(report) {
+      if (!report || !report.report_id) {
+        return null;
+      }
+      const state = getAuditHistoryState(report.report_id);
+      const container = document.createElement("div");
+      container.className = "report-context";
+
+      const heading = document.createElement("h3");
+      heading.textContent = "Audit history";
+      container.appendChild(heading);
+
+      if (state.error) {
+        const error = document.createElement("p");
+        error.textContent = state.error;
+        error.style.color = "var(--danger)";
+        container.appendChild(error);
+      }
+
+      if (!state.initialized && !state.loading && !state.error) {
+        loadAuditHistory(report, { reset: true });
+      }
+
+      if (state.loading && state.items.length === 0) {
+        const loadingText = document.createElement("p");
+        loadingText.textContent = "Loading audit history…";
+        loadingText.style.color = "var(--text-muted)";
+        container.appendChild(loadingText);
+      }
+
+      if (!state.loading && state.items.length === 0 && !state.error) {
+        const emptyText = document.createElement("p");
+        emptyText.textContent = "No audit entries yet.";
+        container.appendChild(emptyText);
+      }
+
+      if (state.items.length > 0) {
+        const entries = document.createElement("ul");
+        entries.style.margin = "0";
+        entries.style.paddingLeft = "1.1rem";
+        entries.style.fontSize = "0.85rem";
+        entries.style.color = "var(--text-muted)";
+
+        state.items.forEach(function (entry) {
+          if (!entry || !entry.status) {
+            return;
+          }
+          const li = document.createElement("li");
+          const parts = [formatAuditStatus(entry.status)];
+          if (entry.officer) {
+            const officer = entry.officer.name || entry.officer.email || entry.officer.username || entry.officer.sub;
+            if (officer) {
+              parts.push("by " + officer);
+            }
+          }
+          if (entry.timestamp) {
+            const ts = formatWeatherTimestamp(entry.timestamp);
+            if (ts) {
+              parts.push(ts);
+            }
+          }
+          li.textContent = parts.filter(Boolean).join(" • ");
+          if (entry.notes) {
+            const notes = document.createElement("div");
+            notes.textContent = entry.notes;
+            notes.style.marginTop = "0.25rem";
+            notes.style.fontStyle = "italic";
+            li.appendChild(notes);
+          }
+          entries.appendChild(li);
+        });
+
+        container.appendChild(entries);
+      }
+
+      if (state.loading && state.items.length > 0) {
+        const loadingMore = document.createElement("p");
+        loadingMore.textContent = "Loading more…";
+        loadingMore.style.color = "var(--text-muted)";
+        container.appendChild(loadingMore);
+      }
+
+      if (!state.loading && state.nextCursor != null) {
+        const loadMore = document.createElement("button");
+        loadMore.type = "button";
+        loadMore.className = "button button-ghost";
+        loadMore.textContent = "Load older entries";
+        loadMore.addEventListener("click", function () {
+          loadAuditHistory(report, { reset: false });
+        });
+        container.appendChild(loadMore);
+      }
+
+      return container;
+    }
+
+    function buildAuditSection(report) {
+      if (!report || !report.report_id) {
+        return null;
+      }
+      const section = document.createElement("section");
+      section.className = "report-context";
+
+      const heading = document.createElement("h3");
+      heading.textContent = "Officer audit";
+      section.appendChild(heading);
+
+      const summary = document.createElement("p");
+      const currentAuditSummary = summarizeAudit(report.audit);
+      summary.textContent = currentAuditSummary || "No audit submitted yet.";
+      section.appendChild(summary);
+
+      const statusMessage = document.createElement("small");
+      statusMessage.style.color = "var(--text-muted)";
+      section.appendChild(statusMessage);
+
+      const form = document.createElement("form");
+      form.className = "report-audit-form";
+      form.style.display = "flex";
+      form.style.flexDirection = "column";
+      form.style.gap = "0.75rem";
+
+      const statusFieldset = document.createElement("fieldset");
+      statusFieldset.style.border = "none";
+      statusFieldset.style.margin = "0";
+      statusFieldset.style.padding = "0";
+
+      const legend = document.createElement("legend");
+      legend.textContent = "Audit decision";
+      legend.style.fontSize = "0.85rem";
+      legend.style.color = "var(--text-muted)";
+      legend.style.marginBottom = "0.25rem";
+      statusFieldset.appendChild(legend);
+
+      const currentStatus = report.audit && report.audit.status ? String(report.audit.status).toUpperCase() : "APPROVED";
+      AUDIT_STATUSES.forEach(function (entry, index) {
+        const label = document.createElement("label");
+        label.style.display = "flex";
+        label.style.alignItems = "center";
+        label.style.gap = "0.5rem";
+        const input = document.createElement("input");
+        input.type = "radio";
+        input.name = "audit-status";
+        input.value = entry.value;
+        input.required = true;
+        if (entry.value === currentStatus || (!currentAuditSummary && index === 0)) {
+          input.checked = true;
+        }
+        label.appendChild(input);
+        const span = document.createElement("span");
+        span.textContent = entry.label;
+        span.style.fontSize = "0.9rem";
+        label.appendChild(span);
+        statusFieldset.appendChild(label);
+      });
+
+      form.appendChild(statusFieldset);
+
+      const notesLabel = document.createElement("label");
+      notesLabel.style.display = "flex";
+      notesLabel.style.flexDirection = "column";
+      notesLabel.style.gap = "0.35rem";
+      notesLabel.style.fontSize = "0.85rem";
+      notesLabel.style.color = "var(--text-muted)";
+      notesLabel.textContent = "Audit notes (optional)";
+
+      const notesField = document.createElement("textarea");
+      notesField.name = "audit-notes";
+      notesField.rows = 3;
+      notesField.placeholder = "Record why you accepted or rejected this evidence.";
+      notesField.value = report.audit && report.audit.notes ? report.audit.notes : "";
+      notesLabel.appendChild(notesField);
+      form.appendChild(notesLabel);
+
+      const submitBtn = document.createElement("button");
+      submitBtn.type = "submit";
+      submitBtn.className = "button";
+      submitBtn.textContent = "Submit audit";
+
+      form.appendChild(submitBtn);
+
+      let submitting = false;
+      form.addEventListener("submit", async function (event) {
+        event.preventDefault();
+        if (submitting) {
+          return;
+        }
+        const statusInput = form.querySelector("input[name=\"audit-status\"]:checked");
+        if (!statusInput) {
+          statusMessage.textContent = "Select a decision before submitting.";
+          return;
+        }
+        submitting = true;
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Submitting…";
+        statusMessage.style.color = "var(--text-muted)";
+        statusMessage.textContent = "Saving audit decision…";
+        try {
+          const updated = await submitAudit(report.report_id, {
+            status: statusInput.value,
+            notes: notesField.value.trim() || ""
+          });
+          activeReport = updated;
+          resetAuditHistoryState(updated && updated.report_id);
+          const card = updated && updated.report_id ? reportCardRefs.get(updated.report_id) : null;
+          if (card) {
+            updateReportCard(card, updated);
+          }
+          plotReportOnMap(updated);
+          refreshReportModal();
+          fetchReports({ reset: true });
+          statusMessage.style.color = "var(--success)";
+          statusMessage.textContent = "Audit saved.";
+        } catch (error) {
+          console.error("Audit update failed", error);
+          if (error && error.code === "not_authorised") {
+            statusMessage.textContent = "Your session is not authorised for audits.";
+          } else if (error && error.message) {
+            statusMessage.textContent = error.message;
+          } else {
+            statusMessage.textContent = "Unable to save audit. Try again shortly.";
+          }
+          statusMessage.style.color = "var(--danger)";
+        } finally {
+          submitting = false;
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Submit audit";
+        }
+      });
+
+      section.appendChild(form);
+
+      const history = buildAuditHistory(report);
+      if (history) {
+        section.appendChild(history);
+      }
+
+      return section;
+    }
+
+    function buildReportMeta(report, options) {
+      const config = Object.assign(
+        {
+          includeWeather: false,
+          includeLamppost: false,
+          includePark: false,
+          includeFilename: true
+        },
+        options || {}
+      );
+      const weatherDetails = summarizeWeatherSnapshot(report ? report.weather_snapshot : null);
+      const lamppostDetails = summarizeLamppostContext(report ? report.location_context : null);
+      const parkDetails = summarizeParkContext(report ? report.location_context : null);
+      const auditSummary = summarizeAudit(report ? report.audit : null);
 
       const meta = document.createElement("div");
       meta.className = "meta";
       meta.appendChild(createMetaRow("Submitted", formatDate(report && report.submitted_at)));
       meta.appendChild(createMetaRow("Status", report && report.status ? report.status : "PENDING_REVIEW"));
-      meta.appendChild(createMetaRow("Filename", report && report.filename ? report.filename : "—"));
+      if (config.includeFilename) {
+        meta.appendChild(createMetaRow("Filename", report && report.filename ? report.filename : "—"));
+      }
       meta.appendChild(createMetaRow("Location", formatLocation(report ? report.location : null)));
       if (report && report.location && typeof report.location.accuracy_m === "number") {
         meta.appendChild(createMetaRow("Accuracy", "±" + report.location.accuracy_m + " m"));
       }
-      if (weatherDetails) {
-        meta.appendChild(createMetaRow("Weather", weatherDetails.summary));
+      if (config.includeWeather) {
+        meta.appendChild(createMetaRow("Weather", weatherDetails ? weatherDetails.summary : "Not captured"));
+      }
+      if (config.includeLamppost) {
+        meta.appendChild(createMetaRow("Lamppost", lamppostDetails ? lamppostDetails.summary : "Not captured"));
+      }
+      if (config.includePark) {
+        meta.appendChild(createMetaRow("Park", parkDetails ? parkDetails.summary : "Not captured"));
+      }
+      if (config.includeAudit) {
+        meta.appendChild(createMetaRow("Audit", auditSummary || "Not audited"));
+      }
+      return meta;
+    }
+
+    function renderReportCard(report) {
+      const card = document.createElement("article");
+      card.className = "card card-compact";
+      if (report && report.report_id) {
+        card.dataset.reportId = String(report.report_id);
+      }
+      card.__reportData = report;
+      card.style.position = "relative";
+      card.setAttribute("role", "button");
+      card.setAttribute("tabindex", "0");
+
+      const openDetails = function (event) {
+        if (event) {
+          event.preventDefault();
+        }
+        openReportModal(card.__reportData || report, card);
+      };
+
+      card.addEventListener("click", openDetails);
+      card.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openDetails();
+        }
+      });
+
+      const preview = buildPreviewSection(report);
+      if (preview) {
+        card.appendChild(preview);
       } else {
-        meta.appendChild(createMetaRow("Weather", "Not captured"));
-      }
-      card.appendChild(meta);
-
-      if (report && report.notes) {
-        const notes = document.createElement("div");
-        notes.className = "notes";
-        notes.textContent = report.notes;
-        card.appendChild(notes);
+        const placeholder = document.createElement("div");
+        placeholder.className = "preview";
+        placeholder.textContent = "No preview available";
+        card.appendChild(placeholder);
       }
 
-      const weatherSection = report ? buildReportWeatherSection(report.weather_snapshot, weatherDetails) : null;
-      if (weatherSection) {
-        card.appendChild(weatherSection);
-      }
+      const title = document.createElement("h2");
+      title.textContent = "Report " + (report && report.report_id ? report.report_id : "Unknown");
+      card.appendChild(title);
 
-      const preview = document.createElement("div");
-      preview.className = "preview";
-      if (report && report.image_url) {
-        const img = document.createElement("img");
-        img.src = report.image_url;
-        img.alt = "Evidence for report " + (report.report_id || "");
-        img.loading = "lazy";
-        preview.appendChild(img);
-      } else {
-        preview.textContent = "No preview available";
+      const badgeSummary = summarizeAudit(report ? report.audit : null);
+      if (badgeSummary && report && report.audit && report.audit.status) {
+        const badge = document.createElement("span");
+        badge.className = "card-badge";
+        badge.dataset.status = String(report.audit.status).toUpperCase();
+        badge.textContent = formatAuditStatus(report.audit.status);
+        card.appendChild(badge);
       }
-      card.appendChild(preview);
 
       return card;
+    }
+
+    function updateReportCard(card, report) {
+      if (!card) {
+        return;
+      }
+      card.__reportData = report;
+      const badge = card.querySelector(".card-badge");
+      const summary = summarizeAudit(report ? report.audit : null);
+      if (summary && report && report.audit && report.audit.status) {
+        if (badge) {
+          badge.dataset.status = String(report.audit.status).toUpperCase();
+          badge.textContent = formatAuditStatus(report.audit.status);
+        } else {
+          const newBadge = document.createElement("span");
+          newBadge.className = "card-badge";
+          newBadge.dataset.status = String(report.audit.status).toUpperCase();
+          newBadge.textContent = formatAuditStatus(report.audit.status);
+          card.appendChild(newBadge);
+        }
+      } else if (badge) {
+        badge.remove();
+      }
+    }
+
+    function renderReportDetails(report) {
+      const fragment = document.createDocumentFragment();
+      fragment.appendChild(buildReportMeta(report, {
+        includeWeather: true,
+        includeLamppost: true,
+        includePark: true,
+        includeAudit: true
+      }));
+
+      const auditSection = buildAuditSection(report);
+      if (auditSection) {
+        fragment.appendChild(auditSection);
+      }
+
+      const notes = buildNotesSection(report);
+      if (notes) {
+        fragment.appendChild(notes);
+      }
+
+      const weatherSection = buildReportWeatherSection(report ? report.weather_snapshot : null);
+      if (weatherSection) {
+        fragment.appendChild(weatherSection);
+      }
+
+      const lamppostSection = buildLamppostSection(report ? report.location_context : null);
+      if (lamppostSection) {
+        fragment.appendChild(lamppostSection);
+      }
+
+      const parkSection = buildParkSection(report ? report.location_context : null);
+      if (parkSection) {
+        fragment.appendChild(parkSection);
+      }
+
+      const preview = buildPreviewSection(report);
+      if (preview) {
+        fragment.appendChild(preview);
+      }
+
+      return fragment;
+    }
+
+    function closeReportModal() {
+      if (!reportModalBackdrop) {
+        return;
+      }
+      reportModalBackdrop.dataset.open = "false";
+      reportModalBackdrop.hidden = true;
+      if (reportModalBody) {
+        reportModalBody.innerHTML = "";
+      }
+      document.body.style.overflow = "";
+      activeReport = null;
+      if (lastFocusedElement && typeof lastFocusedElement.focus === "function") {
+        lastFocusedElement.focus();
+      }
+      lastFocusedElement = null;
+    }
+
+    function refreshReportModal() {
+      if (!reportModalBody || !activeReport) {
+        return;
+      }
+      reportModalBody.innerHTML = "";
+      reportModalBody.appendChild(renderReportDetails(activeReport));
+    }
+
+    function openReportModal(report, trigger) {
+      if (!reportModalBackdrop || !reportModalBody) {
+        return;
+      }
+      activeReport = report;
+      lastFocusedElement = trigger || document.activeElement || null;
+      refreshReportModal();
+      reportModalBackdrop.hidden = false;
+      reportModalBackdrop.dataset.open = "true";
+      document.body.style.overflow = "hidden";
+      window.requestAnimationFrame(function () {
+        if (reportModalCloseBtn && typeof reportModalCloseBtn.focus === "function") {
+          reportModalCloseBtn.focus();
+        }
+      });
+    }
+
+    function isReportModalOpen() {
+      return Boolean(reportModalBackdrop && reportModalBackdrop.dataset.open === "true");
     }
 
     function clearResults() {
@@ -1464,6 +2460,8 @@
       emptyStateEl.hidden = true;
       nextCursor = null;
       loadMoreBtn.disabled = true;
+      reportCardRefs.clear();
+      auditHistoryCache.clear();
       if (mapInstance || mapMarkersLayer) {
         clearMapMarkers();
       } else {
@@ -1870,6 +2868,9 @@
         let mappedThisBatch = 0;
         items.forEach(function (item) {
           const card = renderReportCard(item);
+          if (item && item.report_id) {
+            reportCardRefs.set(item.report_id, card);
+          }
           resultsEl.appendChild(card);
           if (plotReportOnMap(item)) {
             mappedThisBatch += 1;
@@ -1897,6 +2898,33 @@
         setLoading(false);
       }
     }
+
+    if (reportModalCloseBtn) {
+      reportModalCloseBtn.addEventListener("click", function () {
+        closeReportModal();
+      });
+    }
+
+    if (reportModalDismissBtn) {
+      reportModalDismissBtn.addEventListener("click", function () {
+        closeReportModal();
+      });
+    }
+
+    if (reportModalBackdrop) {
+      reportModalBackdrop.addEventListener("click", function (event) {
+        if (event.target === reportModalBackdrop) {
+          closeReportModal();
+        }
+      });
+    }
+
+    document.addEventListener("keydown", function (event) {
+      if (event.key === "Escape" && isReportModalOpen()) {
+        event.preventDefault();
+        closeReportModal();
+      }
+    });
 
     if (refreshBtn) {
       refreshBtn.addEventListener("click", function () {

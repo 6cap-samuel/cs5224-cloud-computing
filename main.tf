@@ -71,27 +71,9 @@ resource "aws_s3_bucket_public_access_block" "evidence_pab" {
 # Immutable audit log with S3 Object Lock (WORM)
 resource "aws_s3_bucket" "audit_log" {
   bucket              = "vapewatch-audit-${var.env}-${random_id.suffix.hex}"
-  object_lock_enabled = true
+  force_destroy = true
 }
 
-resource "aws_s3_bucket_versioning" "audit_v" {
-  bucket = aws_s3_bucket.audit_log.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_object_lock_configuration" "audit_lock" {
-  bucket              = aws_s3_bucket.audit_log.id
-  object_lock_enabled = "Enabled"
-
-  rule {
-    default_retention {
-      mode = "COMPLIANCE"
-      days = 90
-    }
-  }
-}
 
 resource "aws_s3_bucket_public_access_block" "audit_pab" {
   bucket                  = aws_s3_bucket.audit_log.id
@@ -309,6 +291,22 @@ resource "aws_s3_object" "officer_admin_portal_index" {
   })
 }
 
+resource "aws_s3_object" "lamppost_dataset" {
+  bucket       = aws_s3_bucket.raw.bucket
+  key          = "reference/lampposts.json"
+  source       = "${path.module}/data/lampposts.json"
+  etag         = filemd5("${path.module}/data/lampposts.json")
+  content_type = "application/json"
+}
+
+resource "aws_s3_object" "park_dataset" {
+  bucket       = aws_s3_bucket.raw.bucket
+  key          = "reference/parks.json"
+  source       = "${path.module}/data/parks.json"
+  etag         = filemd5("${path.module}/data/parks.json")
+  content_type = "application/json"
+}
+
 resource "aws_cloudfront_cache_policy" "officer_admin_portal_short_ttl" {
   name    = "vapewatch-officer-admin-${var.env}-short-ttl"
   comment = "Short TTLs for officer admin portal shell"
@@ -481,6 +479,7 @@ data "aws_iam_policy_document" "lambda_inline" {
     actions = [
       "dynamodb:PutItem",
       "dynamodb:GetItem",
+      "dynamodb:Query",
       "dynamodb:UpdateItem",
       "dynamodb:Scan",
       "dynamodb:DescribeStream",
@@ -492,6 +491,12 @@ data "aws_iam_policy_document" "lambda_inline" {
       aws_dynamodb_table.reports.arn,
       aws_dynamodb_table.reports.stream_arn
     ]
+  }
+
+  statement {
+    sid = "CognitoUserLookup"
+    actions = ["cognito-idp:AdminGetUser"]
+    resources = [aws_cognito_user_pool.officers.arn]
   }
 
   statement {
@@ -611,11 +616,18 @@ resource "aws_lambda_function" "ingest" {
   runtime       = "python3.11"
   environment {
     variables = {
-      STATE_MACHINE_ARN = aws_sfn_state_machine.pipeline.arn
-      RAW_BUCKET        = aws_s3_bucket.raw.bucket
-      EVIDENCE_BUCKET   = aws_s3_bucket.evidence.bucket
+      STATE_MACHINE_ARN           = aws_sfn_state_machine.pipeline.arn
+      RAW_BUCKET                  = aws_s3_bucket.raw.bucket
+      EVIDENCE_BUCKET             = aws_s3_bucket.evidence.bucket
+      LAMPPOST_DATA_BUCKET        = aws_s3_bucket.raw.bucket
+      LAMPPOST_DATA_KEY           = aws_s3_object.lamppost_dataset.key
+      LAMPPOST_MAX_DISTANCE_METERS = var.lamppost_max_distance_meters
+      PARK_DATA_BUCKET            = aws_s3_bucket.raw.bucket
+      PARK_DATA_KEY               = aws_s3_object.park_dataset.key
+      PARK_MAX_DISTANCE_METERS    = var.park_max_distance_meters
     }
   }
+  depends_on = [aws_s3_object.lamppost_dataset, aws_s3_object.park_dataset]
 }
 
 resource "aws_lambda_function" "redaction" {
@@ -687,6 +699,7 @@ resource "aws_lambda_function" "officer_admin" {
       REPORTS_TABLE  = aws_dynamodb_table.reports.name
       RAW_BUCKET     = aws_s3_bucket.raw.bucket
       SIGNED_URL_TTL = "900"
+      COGNITO_USER_POOL_ID = aws_cognito_user_pool.officers.id
     }
   }
 }
@@ -783,6 +796,22 @@ resource "aws_apigatewayv2_authorizer" "officer_jwt" {
 resource "aws_apigatewayv2_route" "reports_list" {
   api_id             = aws_apigatewayv2_api.http.id
   route_key          = "GET /reports"
+  target             = "integrations/${aws_apigatewayv2_integration.officer_reports.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.officer_jwt.id
+}
+
+resource "aws_apigatewayv2_route" "report_audit" {
+  api_id             = aws_apigatewayv2_api.http.id
+  route_key          = "POST /reports/{report_id}/audit"
+  target             = "integrations/${aws_apigatewayv2_integration.officer_reports.id}"
+  authorization_type = "JWT"
+  authorizer_id      = aws_apigatewayv2_authorizer.officer_jwt.id
+}
+
+resource "aws_apigatewayv2_route" "report_audit_history" {
+  api_id             = aws_apigatewayv2_api.http.id
+  route_key          = "GET /reports/{report_id}/history"
   target             = "integrations/${aws_apigatewayv2_integration.officer_reports.id}"
   authorization_type = "JWT"
   authorizer_id      = aws_apigatewayv2_authorizer.officer_jwt.id

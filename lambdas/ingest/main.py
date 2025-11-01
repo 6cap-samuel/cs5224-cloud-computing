@@ -29,8 +29,16 @@ WEATHER_API_URL = os.environ.get(
 )
 WEATHER_API_TIMEOUT = float(os.environ.get("WEATHER_API_TIMEOUT", "4"))
 WEATHER_MAX_FORECASTS = int(os.environ.get("WEATHER_MAX_FORECASTS", "48"))
+LAMPPOST_DATA_BUCKET = os.environ.get("LAMPPOST_DATA_BUCKET")
+LAMPPOST_DATA_KEY = os.environ.get("LAMPPOST_DATA_KEY")
+LAMPPOST_MAX_DISTANCE_METERS = float(os.environ.get("LAMPPOST_MAX_DISTANCE_METERS", "500"))
+PARK_DATA_BUCKET = os.environ.get("PARK_DATA_BUCKET")
+PARK_DATA_KEY = os.environ.get("PARK_DATA_KEY")
+PARK_MAX_DISTANCE_METERS = float(os.environ.get("PARK_MAX_DISTANCE_METERS", "750"))
 
 _FILENAME_CLEAN_PATTERN = re.compile(r"[^A-Za-z0-9._-]+")
+_LAMPPOST_CACHE: list[dict] | None = None
+_PARK_CACHE: list[dict] | None = None
 
 try:
     from PIL import Image
@@ -313,6 +321,180 @@ def _fetch_weather_snapshot(location: dict | None) -> dict | None:
     return snapshot if len(snapshot) > 2 else None
 
 
+def _load_lamppost_data() -> list[dict]:
+    global _LAMPPOST_CACHE
+    if _LAMPPOST_CACHE is not None:
+        return _LAMPPOST_CACHE
+    if not LAMPPOST_DATA_BUCKET or not LAMPPOST_DATA_KEY:
+        _LAMPPOST_CACHE = []
+        return _LAMPPOST_CACHE
+    try:
+        response = s3.get_object(Bucket=LAMPPOST_DATA_BUCKET, Key=LAMPPOST_DATA_KEY)
+        payload = response.get("Body").read()
+        data = json.loads(payload.decode("utf-8"))
+        if isinstance(data, dict):
+            records = data.get("lampposts") or data.get("items") or data.get("features") or []
+            if isinstance(records, list):
+                data = records
+            else:
+                data = []
+        if not isinstance(data, list):
+            log.warning("Lamppost dataset is not a list; ignoring")
+            data = []
+        parsed: list[dict] = []
+        for entry in data:
+            if not isinstance(entry, dict):
+                continue
+            try:
+                lat = float(entry.get("latitude"))
+                lon = float(entry.get("longitude"))
+            except (TypeError, ValueError):
+                continue
+            record = {
+                "latitude": lat,
+                "longitude": lon,
+            }
+            if entry.get("id"):
+                record["id"] = str(entry["id"])
+            elif entry.get("lamp_id"):
+                record["id"] = str(entry["lamp_id"])
+            if entry.get("name"):
+                record["name"] = str(entry["name"])
+            elif entry.get("description"):
+                record["name"] = str(entry["description"])
+            parsed.append(record)
+        _LAMPPOST_CACHE = parsed
+        log.info("Loaded %d lamppost records", len(parsed))
+    except Exception:
+        log.exception("Failed to load lamppost dataset from %s/%s", LAMPPOST_DATA_BUCKET, LAMPPOST_DATA_KEY)
+        _LAMPPOST_CACHE = []
+    return _LAMPPOST_CACHE
+
+
+def _load_park_data() -> list[dict]:
+    global _PARK_CACHE
+    if _PARK_CACHE is not None:
+        return _PARK_CACHE
+    if not PARK_DATA_BUCKET or not PARK_DATA_KEY:
+        _PARK_CACHE = []
+        return _PARK_CACHE
+    try:
+        response = s3.get_object(Bucket=PARK_DATA_BUCKET, Key=PARK_DATA_KEY)
+        payload = response.get("Body").read()
+        data = json.loads(payload.decode("utf-8"))
+        if isinstance(data, dict):
+            records = data.get("parks") or data.get("items") or data.get("features") or []
+            if isinstance(records, list):
+                data = records
+            else:
+                data = []
+        if not isinstance(data, list):
+            log.warning("Park dataset is not a list; ignoring")
+            data = []
+        parsed: list[dict] = []
+        for entry in data:
+            if not isinstance(entry, dict):
+                continue
+            try:
+                lat = float(entry.get("latitude"))
+                lon = float(entry.get("longitude"))
+            except (TypeError, ValueError):
+                continue
+            record = {
+                "latitude": lat,
+                "longitude": lon,
+            }
+            if entry.get("id"):
+                record["id"] = str(entry["id"])
+            if entry.get("name"):
+                record["name"] = str(entry["name"])
+            elif entry.get("park_name"):
+                record["name"] = str(entry["park_name"])
+            if entry.get("type"):
+                record["type"] = str(entry["type"])
+            parsed.append(record)
+        _PARK_CACHE = parsed
+        log.info("Loaded %d park records", len(parsed))
+    except Exception:
+        log.exception("Failed to load park dataset from %s/%s", PARK_DATA_BUCKET, PARK_DATA_KEY)
+        _PARK_CACHE = []
+    return _PARK_CACHE
+
+
+def _find_nearest_lamppost(location: dict | None) -> dict | None:
+    if not location or "latitude" not in location or "longitude" not in location:
+        return None
+    lampposts = _load_lamppost_data()
+    if not lampposts:
+        return None
+    try:
+        lat = float(location["latitude"])
+        lon = float(location["longitude"])
+    except (TypeError, ValueError):
+        return None
+    best = None
+    for entry in lampposts:
+        lat2 = entry.get("latitude")
+        lon2 = entry.get("longitude")
+        if lat2 is None or lon2 is None:
+            continue
+        distance_km = _distance_km(lat, lon, lat2, lon2)
+        if not math.isfinite(distance_km):
+            continue
+        distance_m = distance_km * 1000.0
+        if LAMPPOST_MAX_DISTANCE_METERS > 0 and distance_m > LAMPPOST_MAX_DISTANCE_METERS:
+            continue
+        if best is None or distance_m < best["distance_m"]:
+            best = {
+                "distance_m": round(distance_m, 2),
+                "latitude": lat2,
+                "longitude": lon2,
+            }
+            if entry.get("id"):
+                best["id"] = entry["id"]
+            if entry.get("name"):
+                best["name"] = entry["name"]
+    return best
+
+
+def _find_nearest_park(location: dict | None) -> dict | None:
+    if not location or "latitude" not in location or "longitude" not in location:
+        return None
+    parks = _load_park_data()
+    if not parks:
+        return None
+    try:
+        lat = float(location["latitude"])
+        lon = float(location["longitude"])
+    except (TypeError, ValueError):
+        return None
+    best = None
+    for entry in parks:
+        lat2 = entry.get("latitude")
+        lon2 = entry.get("longitude")
+        if lat2 is None or lon2 is None:
+            continue
+        distance_km = _distance_km(lat, lon, lat2, lon2)
+        if not math.isfinite(distance_km):
+            continue
+        distance_m = distance_km * 1000.0
+        if PARK_MAX_DISTANCE_METERS > 0 and distance_m > PARK_MAX_DISTANCE_METERS:
+            continue
+        if best is None or distance_m < best["distance_m"]:
+            best = {
+                "distance_m": round(distance_m, 2),
+                "latitude": lat2,
+                "longitude": lon2,
+            }
+            if entry.get("id"):
+                best["id"] = entry["id"]
+            if entry.get("name"):
+                best["name"] = entry["name"]
+            if entry.get("type"):
+                best["type"] = entry["type"]
+    return best
+
+
 def lambda_handler(event, ctx):
     body = event.get("body")
     try:
@@ -342,6 +524,15 @@ def lambda_handler(event, ctx):
         weather_snapshot = _fetch_weather_snapshot(body.get("location"))
         if weather_snapshot:
             body["weather_snapshot"] = weather_snapshot
+
+    lamppost = _find_nearest_lamppost(body.get("location"))
+    if lamppost:
+        context = body.setdefault("location_context", {})
+        context["nearest_lamppost"] = lamppost
+    park = _find_nearest_park(body.get("location"))
+    if park:
+        context = body.setdefault("location_context", {})
+        context["nearest_park"] = park
 
     if ARN:
         try:
