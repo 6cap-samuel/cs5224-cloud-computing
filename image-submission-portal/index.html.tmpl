@@ -491,7 +491,7 @@
           <div class="field">
             <label class="field-label" for="photo">Evidence photo</label>
             <p class="field-hint">JPEG or PNG, up to 10 MB. A well-lit, close-up image helps us classify the report.</p>
-            <input id="photo" name="photo" type="file" accept="image/*" required class="file-input">
+            <input id="photo" name="photo" type="file" accept="image/*,.heic,.heif,.heifs,.hevc,.heics,.avif,.tif,.tiff,.bmp,.webp" required class="file-input">
             <p class="file-meta" data-state="empty" data-file-name>No file selected yet.</p>
           </div>
           <div class="preview" id="preview" aria-live="polite" aria-atomic="true"></div>
@@ -542,6 +542,25 @@
     const locationMap = document.getElementById('location-map');
     const locationMapPlaceholder = document.getElementById('location-map-placeholder');
 
+    const DIRECT_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/bmp']);
+    const CONVERTIBLE_IMAGE_TYPES = new Set([
+      'image/heic',
+      'image/heif',
+      'image/heifs',
+      'image/heic-sequence',
+      'image/heif-sequence',
+      'image/hevc',
+      'image/hevc-sequence',
+      'image/avif',
+      'image/tiff',
+      'image/x-tiff',
+      'image/bmp',
+      'image/heic;codecs=hevc'
+    ]);
+
+    let selectedFile = null;
+    let fileSelectionToken = 0;
+
     let previewUrl;
     const locationState = {
       latitude: null,
@@ -566,6 +585,132 @@
       }
       const precision = value >= 10 || index === 0 ? 0 : 1;
       return value.toFixed(precision) + ' ' + units[index];
+    };
+
+    const renameFileExtension = (name, newExtension) => {
+      if (!name) {
+        return 'upload' + newExtension;
+      }
+      const dotIndex = name.lastIndexOf('.');
+      if (dotIndex > 0 && dotIndex >= name.length - 6) {
+        return name.slice(0, dotIndex) + newExtension;
+      }
+      return name + newExtension;
+    };
+
+    const loadImageBitmap = async (file) => {
+      if (window.createImageBitmap) {
+        return createImageBitmap(file);
+      }
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const image = new Image();
+        image.onload = () => {
+          URL.revokeObjectURL(url);
+          resolve(image);
+        };
+        image.onerror = (error) => {
+          URL.revokeObjectURL(url);
+          reject(error);
+        };
+        image.src = url;
+      });
+    };
+
+    const canvasToBlob = (canvas, type, quality) => {
+      return new Promise((resolve, reject) => {
+        if (!canvas) {
+          reject(new Error('no_canvas'));
+          return;
+        }
+        if (canvas.toBlob) {
+          canvas.toBlob((blob) => {
+            if (blob) {
+              resolve(blob);
+            } else {
+              reject(new Error('blob_failed'));
+            }
+          }, type, quality);
+          return;
+        }
+        try {
+          const dataUrl = canvas.toDataURL(type, quality);
+          const base64 = dataUrl.split(',')[1];
+          if (!base64) {
+            reject(new Error('toDataURL_failed'));
+            return;
+          }
+          const binary = atob(base64);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i += 1) {
+            bytes[i] = binary.charCodeAt(i);
+          }
+          resolve(new Blob([bytes], { type }));
+        } catch (error) {
+          reject(error);
+        }
+      });
+    };
+
+    const normalizePhotoFile = async (file) => {
+      if (!file) {
+        return null;
+      }
+      if (typeof File === 'undefined') {
+        return file;
+      }
+      const type = (file.type || '').toLowerCase();
+      const name = file.name || '';
+      if (DIRECT_IMAGE_TYPES.has(type)) {
+        return file;
+      }
+      const nameSuggestsConversion = /\.(heic|heif|hevc|heifs|avif|tiff?|bmp)$/i.test(name);
+      const shouldAttemptConversion =
+        (type && (CONVERTIBLE_IMAGE_TYPES.has(type) || type.startsWith('image/'))) || (!type && nameSuggestsConversion);
+      if (!shouldAttemptConversion) {
+        return file;
+      }
+      try {
+        const bitmap = await loadImageBitmap(file);
+        const width = bitmap.width || bitmap.naturalWidth || 0;
+        const height = bitmap.height || bitmap.naturalHeight || 0;
+        if (!width || !height) {
+          if (bitmap.close) {
+            bitmap.close();
+          }
+          return file;
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext('2d');
+        if (!context) {
+          if (bitmap.close) {
+            bitmap.close();
+          }
+          return file;
+        }
+        context.drawImage(bitmap, 0, 0, width, height);
+        if (bitmap.close) {
+          bitmap.close();
+        }
+        const blob = await canvasToBlob(canvas, 'image/jpeg', 0.92);
+        if (!blob) {
+          return file;
+        }
+        const convertedName = renameFileExtension(name, '.jpg');
+        const convertedFile = new File([blob], convertedName, { type: 'image/jpeg' });
+        try {
+          convertedFile.vapewatchConverted = true;
+          convertedFile.vapewatchOriginalName = name;
+        } catch (ignore) {
+          // Best-effort metadata attachment.
+        }
+        return convertedFile;
+      } catch (error) {
+        console.warn('Unable to convert photo for upload', error);
+        return file;
+      }
     };
 
     const setStatus = (message, variant = '') => {
@@ -772,11 +917,36 @@
 
       fileMeta.textContent = file.name + ' · ' + formatBytes(file.size);
       fileMeta.dataset.state = 'ready';
+      if (file.vapewatchConverted && file.vapewatchOriginalName) {
+        fileMeta.textContent += ' (converted from ' + file.vapewatchOriginalName + ')';
+      } else if (file.vapewatchConverted) {
+        fileMeta.textContent += ' (converted for compatibility)';
+      }
+    };
+
+    const handleFileSelection = async (file) => {
+      const token = ++fileSelectionToken;
+      if (!file) {
+        selectedFile = null;
+        updatePreview(null);
+        return;
+      }
+      let processed = file;
+      try {
+        processed = await normalizePhotoFile(file);
+      } catch (error) {
+        console.warn('Photo preprocessing failed', error);
+      }
+      if (token !== fileSelectionToken) {
+        return;
+      }
+      selectedFile = processed;
+      updatePreview(selectedFile);
     };
 
     photoInput.addEventListener('change', () => {
-      const file = photoInput.files[0];
-      updatePreview(file);
+      const file = photoInput.files[0] || null;
+      handleFileSelection(file);
     });
 
     updatePreview(null);
@@ -784,7 +954,7 @@
 
     form.addEventListener('submit', (event) => {
       event.preventDefault();
-      const file = photoInput.files[0];
+      const file = selectedFile;
       if (!file) {
         setStatus('Please attach an evidence photo before submitting.', 'error');
         return;
@@ -798,9 +968,10 @@
       reader.onload = async () => {
         try {
           const base64 = reader.result.split(',')[1];
+          const contentType = (file.type && typeof file.type === 'string') ? file.type : 'application/octet-stream';
           const payload = {
             filename: file.name,
-            content_type: file.type,
+            content_type: contentType,
             photo_base64: base64,
             notes: notesInput.value || ''
           };
@@ -829,6 +1000,8 @@
 
           setStatus('Thanks! Your report was submitted for processing.', 'success');
           form.reset();
+          fileSelectionToken += 1;
+          selectedFile = null;
           updatePreview(null);
           resetLocationState();
         } catch (error) {
