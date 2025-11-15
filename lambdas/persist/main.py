@@ -12,6 +12,7 @@ log.setLevel(logging.INFO)
 
 _TABLE_NAME = os.environ["REPORTS_TABLE"]
 _ALERTS_TOPIC = os.environ.get("ALERTS_TOPIC")
+_MAX_STORED_DETECTIONS = 25
 
 dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table(_TABLE_NAME)
@@ -216,6 +217,122 @@ def _ensure_dict(value):
     return value if isinstance(value, dict) else {}
 
 
+def _coerce_bool(value) -> bool | None:
+    if isinstance(value, bool):
+        return value
+    return None
+
+
+def _first_non_none(*values):
+    for value in values:
+        if value is not None:
+            return value
+    return None
+
+
+def _prepare_detections(source) -> list[dict] | None:
+    detections = None
+    if isinstance(source, list):
+        detections = source
+    elif isinstance(source, dict):
+        inner = source.get("detections")
+        if isinstance(inner, list):
+            detections = inner
+    if not isinstance(detections, list):
+        return None
+
+    sanitized: list[dict] = []
+    for entry in detections[:_MAX_STORED_DETECTIONS]:
+        if not isinstance(entry, dict):
+            continue
+        detection: dict[str, object] = {}
+        label = _clean_string(entry.get("class_name"), 120)
+        if label:
+            detection["class_name"] = label
+        try:
+            cls_id = int(entry.get("class_id"))
+        except (TypeError, ValueError):
+            cls_id = None
+        if cls_id is not None:
+            detection["class_id"] = cls_id
+        confidence = _safe_decimal(entry.get("confidence"), precision=4)
+        if confidence is not None:
+            detection["confidence"] = confidence
+        bbox = entry.get("bbox")
+        if isinstance(bbox, dict):
+            bbox_payload = {}
+            for coord in ("x1", "y1", "x2", "y2"):
+                coord_value = _safe_decimal(bbox.get(coord), precision=None)
+                if coord_value is not None:
+                    bbox_payload[coord] = coord_value
+            if bbox_payload:
+                detection["bbox"] = bbox_payload
+        if detection:
+            sanitized.append(detection)
+    return sanitized or None
+
+
+def _prepare_inference(event, detections: list[dict] | None) -> dict | None:
+    inference = event.get("inference")
+    if not isinstance(inference, dict):
+        inference = {}
+
+    threshold_raw = _first_non_none(
+        event.get("confidence_threshold"),
+        inference.get("confidence_threshold"),
+        (inference.get("result") or {}).get("confidence_threshold"),
+    )
+    threshold = _safe_decimal(threshold_raw, precision=4)
+
+    endpoint = _clean_string(inference.get("endpoint"), 255)
+    result_block = inference.get("result")
+    if not isinstance(result_block, dict):
+        result_block = {}
+
+    total_raw = _first_non_none(
+        event.get("total_detections"),
+        result_block.get("total_detections"),
+        len(detections or []),
+    )
+    total_detections = _safe_decimal(total_raw, precision=0)
+
+    vape_detected = _first_non_none(
+        _coerce_bool(event.get("vape_detected")),
+        _coerce_bool(result_block.get("vape_detected")),
+    )
+    cigarette_detected = _first_non_none(
+        _coerce_bool(event.get("cigarette_detected")),
+        _coerce_bool(result_block.get("cigarette_detected")),
+    )
+
+    faces_blurred = _safe_decimal(
+        _first_non_none(event.get("faces_blurred"), result_block.get("faces_blurred")),
+        precision=0,
+    )
+
+    prepared_result: dict[str, object] = {}
+    if detections:
+        prepared_result["detections"] = detections
+    if faces_blurred is not None:
+        prepared_result["faces_blurred"] = faces_blurred
+
+    inference_payload: dict[str, object] = {}
+    if endpoint:
+        inference_payload["endpoint"] = endpoint
+    if threshold is not None:
+        inference_payload["confidence_threshold"] = threshold
+    if total_detections is not None:
+        inference_payload["total_detections"] = total_detections
+    if vape_detected is not None:
+        inference_payload["vape_detected"] = vape_detected
+    if cigarette_detected is not None:
+        inference_payload["cigarette_detected"] = cigarette_detected
+    if prepared_result:
+        inference_payload["result"] = prepared_result
+
+    return inference_payload or None
+
+
 def lambda_handler(event, ctx):
     report_id = _clean_string(event.get("request_id")) or str(uuid.uuid4())
     submitted_at = _isoformat_now()
@@ -226,6 +343,10 @@ def lambda_handler(event, ctx):
     location = _prepare_location(event.get("location"))
     weather_snapshot = _prepare_weather(event.get("weather_snapshot"))
     location_context = _prepare_location_context(event.get("location_context"))
+
+    raw_inference = _ensure_dict(event.get("inference"))
+    detections = _prepare_detections(event.get("detections") or raw_inference.get("result"))
+    inference_payload = _prepare_inference(event, detections)
 
     item = {
         "report_id": report_id,
@@ -241,11 +362,25 @@ def lambda_handler(event, ctx):
         "location": location,
         "weather_snapshot": weather_snapshot,
         "location_context": location_context,
+        "inference": inference_payload,
+        "detections": detections,
     }
+
+    if inference_payload:
+        if inference_payload.get("total_detections") is not None:
+            item["total_detections"] = inference_payload["total_detections"]
+        if inference_payload.get("vape_detected") is not None:
+            item["vape_detected"] = inference_payload["vape_detected"]
+        if inference_payload.get("cigarette_detected") is not None:
+            item["cigarette_detected"] = inference_payload["cigarette_detected"]
 
     # DynamoDB does not allow empty map attributes.
     if not item["assets"]:
         item.pop("assets")
+    if item.get("detections") is None:
+        item.pop("detections", None)
+    if item.get("inference") is None:
+        item.pop("inference", None)
 
     item = _strip_none(item)
 
@@ -311,4 +446,14 @@ def lambda_handler(event, ctx):
             event["location_context"] = context_payload
     if weather_snapshot:
         event["weather_snapshot"] = weather_snapshot
+    if detections:
+        event["detections"] = detections
+    if inference_payload:
+        event["inference"] = inference_payload
+        if inference_payload.get("total_detections") is not None:
+            event["total_detections"] = inference_payload["total_detections"]
+        if inference_payload.get("vape_detected") is not None:
+            event["vape_detected"] = inference_payload["vape_detected"]
+        if inference_payload.get("cigarette_detected") is not None:
+            event["cigarette_detected"] = inference_payload["cigarette_detected"]
     return event

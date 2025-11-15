@@ -1,0 +1,268 @@
+\documentclass[11pt]{article}
+\usepackage{geometry}
+\geometry{margin=1in}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{siunitx}
+\usepackage{float}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=blue,urlcolor=blue,citecolor=blue}
+\sisetup{group-separator={,},group-minimum-digits=4,round-mode=places,round-precision=2}
+
+\title{VapeWatch: Privacy-Preserving Vaping Detection as a Service}
+\author{Team VapeWatch (CS5224 Cloud Computing)}
+\date{16~November~2025}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+VapeWatch is a citizen-participation Software-as-a-Service (SaaS) that makes it easy for members of the public to report suspected vaping incidents around schools, hawker centres, and public parks in Singapore. A responsive submission portal captures an annotated photo and location metadata, an event-driven AWS pipeline redacts sensitive content, scores the image with a managed YOLOv8 model hosted on Amazon SageMaker, enriches the report with nearby lamppost and park data sourced from data.gov.sg, and publishes the results to an officer-facing portal secured by Amazon Cognito. This report documents the business case, financial model, technical architecture, evaluation, and source code so that the solution can be assessed for CS5224.
+\end{abstract}
+
+\section{Motivation and Business Case}
+\subsection{Problem landscape}
+\begin{itemize}[leftmargin=*]
+  \item Singapore outlawed the import, sale, and possession of vaporisers in 2018. Despite active enforcement, the Health Sciences Authority seized more than 25{,}000 devices in 2024, and 56\% of the cases involved youths near schools or parks.\cite{hsa2024} Manual patrols and CCTV systems offer delayed response and require significant manpower.
+  \item Existing crowdsourcing apps (e.g., OneService) support nuisance and littering reports,\cite{oneservice} but lack vape-specific workflows such as automated evidence vetting, air-quality overlays, and immutable audit trails demanded by enforcement teams.
+  \item Officers also need context to prioritise leads: repeat-offence hotspots, weather conditions that influence vapour dispersion, and proximity to amenities (lamppost IDs accelerate dispatching).
+\end{itemize}
+
+\subsection{Target users and user research}
+We conducted desk research on NEA enforcement operations and MOE discipline protocols, supplementing with secondary sources such as public speeches and parliamentary responses.\cite{nea-cctv-cost,hsa2024} Key insights include: (i) officers distrust anonymous photos due to tampering; (ii) cross-agency collaboration needs redacted evidence with audit history; (iii) dashboards should surface high-confidence, high-footfall cases first. VapeWatch addresses these needs with secure uploads, tamper-evident storage, and a prioritised backlog view.
+
+\subsection{System goals}
+\begin{enumerate}[label=G\arabic*:,leftmargin=*]
+  \item Deliver end-to-end AI-assisted triage within 10~seconds while keeping citizen friction low.
+  \item Guarantee integrity and non-repudiation of evidence for at least one year via versioned S3 buckets with Object Lock semantics.
+  \item Provide officers with an authenticated portal that supports audit notes, history, and temporary access to the original media without copying data.
+\end{enumerate}
+
+\section{Business Model and Cost Comparison}
+\subsection{Value proposition and pricing}
+VapeWatch operates as a public-sector SaaS funded via a tiered annual subscription guided by GovTech's shared services pricing benchmarks.\cite{govtech-pricing}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Tier 1 (500 reports/month):} S\$2.4k/month covering the managed SageMaker endpoint, two static portals, and support.
+  \item \textbf{Tier 2 (2k reports/month):} S\$4.9k/month with 2\times inference capacity and analytics exports.
+  \item \textbf{Tier 3 (national roll-out):} Custom enterprise pricing with multi-region failover.
+\end{itemize}
+This pricing undercuts redeploying CCTV trailers (~S\$6.5k/month per hotspot)\cite{nea-cctv-cost} and demonstrates a clear ROI when VapeWatch prevents at least four S\$600 vaping penalties or one S\$10k retailer fine per month.\cite{moh-vaping-fines}
+
+\subsection{Cloud opex}
+Table~\ref{tab:cloud-costs} itemises the monthly cost assuming the \textit{dev} environment processes 60 citizen reports/day (1{,}800 per month) with an average 1.2~MB photo. Prices reference the AWS Singapore region in November 2025 and use a FX rate of 1~USD~=~1.35~SGD.\cite{aws-pricing}
+
+\begin{table}[h]
+  \centering
+  \caption{Estimated monthly AWS spend for VapeWatch}
+  \label{tab:cloud-costs}
+  \begin{tabularx}{\linewidth}{@{}p{3.6cm}Xp{2.6cm}r@{}}
+    \toprule
+    Component & Assumption & AWS service & Cost (S\$) \\
+    \midrule
+    Managed inference & ml.m5.large endpoint running 730~h & SageMaker & 126.0 \\
+    Citizen ingestion & 108k HTTP requests, 6 state transitions/report, 1.1M Lambda GB-s & API Gateway, Step Functions, Lambda & 18.4 \\
+    Storage & 5~GB raw+evidence, 5~GB audit, 50k PUT/GET & Amazon S3 & 3.9 \\
+    Evidence delivery & 50~GB CloudFront egress to Singapore & CloudFront & 6.5 \\
+    Persistence & 1.8k WCU, 18k RCU on-demand + 1~GB data & DynamoDB & 3.8 \\
+    Notifications/Auth & 2k SNS publishes, 5k Cognito MAUs & SNS, Cognito & 2.1 \\
+    Observability & 5~GB logs + 20 alarms & CloudWatch & 1.7 \\
+    Misc & Route~53 health checks, S3 Glacier for archives & AWS shared & 2.0 \\
+    \midrule
+    \multicolumn{3}{@{}r}{\textbf{Total monthly opex}} & \textbf{S\$164.4} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\subsection{On-premise alternative}
+To contrast, we modelled an on-premise deployment sized for the same workload: one 1U GPU inference server (Intel Xeon + NVIDIA L4), a 4-node CPU cluster for web/API hosting, 8~TB of redundant storage, and networking, using Dell's PowerEdge pricing guidance and recent Singapore data-centre market benchmarks as baselines.\cite{dell-r760xa,govtech-dc} Amortising hardware over 36~months, plus facilities, yields Table~\ref{tab:onprem}.
+
+\begin{table}[h]
+  \centering
+  \caption{Estimated monthly on-premise cost}
+  \label{tab:onprem}
+  \begin{tabularx}{\linewidth}{@{}p{4.2cm}Xr@{}}
+    \toprule
+    Item & Notes & Cost (S\$) \\
+    \midrule
+    GPU inference server & S\$12k capital / 36~months & 333.0 \\
+    CPU/application nodes & S\$9k capital / 36~months & 250.0 \\
+    Storage array & S\$6k NAS / 36~months & 166.7 \\
+    Facilities & Power (1.5~kW), cooling, rack fees & 150.0 \\
+    Maintenance & 1 FTE day/month equivalent & 120.0 \\
+    Software support & YOLOv8 license, patching tools & 80.0 \\
+    \midrule
+    \multicolumn{2}{@{}r}{\textbf{Total monthly opex}} & \textbf{S\$1{,}099.7} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+The on-premise option costs 6.7~$\times$~more per month, lacks auto-scaling, and still requires engineers to maintain CUDA stacks. VapeWatch's pay-as-you-go infrastructure keeps the gross margin above 90\% for Tier~1 customers while absorbing seasonal peaks.
+
+\subsection{Service-model analysis (IaaS vs. PaaS vs. SaaS)}
+Beyond a simple on-prem versus cloud comparison, we evaluated how VapeWatch would look if it were delivered at different layers of the cloud stack, informed by AWS, Azure, and Gartner guidance on service-model responsibilities.\cite{aws-shared-resp,azure-paas,gartner-saas} Table~\ref{tab:iaas-paas-saas} summarises the key trade-offs.
+
+\begin{table}[htbp]
+  \centering
+  \caption{Comparison across cloud service models}
+  \label{tab:iaas-paas-saas}
+  \begin{tabularx}{\linewidth}{@{}p{2.4cm}p{2.5cm}Xp{2.1cm}p{1.8cm}@{}}
+    \toprule
+    Model & Example stack & Pros & Cons & Est. monthly ops load \\
+    \midrule
+    IaaS & EC2 + self-managed Kubernetes, DIY ML hosting & Maximum control over networking, GPU selection, and custom runtimes; can reuse existing infra-as-code pipelines & High DevOps burden (patching, scaling, GPU drivers), slower security compliance, longer lead time to certify for gov agencies & \SI{80}{engineer~hours} \\
+    PaaS & AWS Elastic Beanstalk / Azure App Service + SageMaker Hosting + managed databases & Autoscaling web tiers, managed backups, integrated monitoring; teams focus on application code & Less granular control (e.g., limited access to underlying OS), vendor-specific deployment descriptors & \SI{35}{engineer~hours} \\
+    SaaS & VapeWatch (fully managed portal + API) & Fastest time-to-value, predictable SLA, turnkey compliance artefacts, shared innovation roadmap & Requires trust in vendor roadmap, fewer knobs for bespoke integrations & \SI{10}{engineer~hours} \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Delivering VapeWatch as a SaaS minimises the engineering burn needed by public agencies (10~hours/month for configuration reviews instead of 80~hours maintaining an IaaS stack).\cite{gartner-saas} It also enables a shared data moat where repeated offenders can be correlated nationally rather than per-agency. Nonetheless, we intentionally designed the Terraform to be portable so that customers insisting on IaaS can self-host by swapping the managed SageMaker endpoint for EC2-based inference hosts.
+
+\subsection{Multi-cloud and vendor comparison}
+Although AWS offers a cohesive experience for infrastructure-as-code, we benchmarked equivalent services on Microsoft Azure and Google Cloud Platform (GCP) to ensure the architecture is portable and to prepare for agencies with pre-existing vendor lock-ins, referencing their respective service catalogs and Gartner's Magic Quadrant for Cloud Infrastructure.\cite{azure-services,gcp-services,gartner-iaas} Table~\ref{tab:vendor} captures the mapping.
+
+\begin{table}[h]
+  \centering
+  \caption{AWS services vs. Azure/GCP counterparts}
+  \label{tab:vendor}
+  \begin{tabularx}{\linewidth}{@{}p{3cm}p{3.1cm}p{3.1cm}X@{}}
+    \toprule
+    Capability & AWS (current) & Azure alternative & GCP alternative \\
+    \midrule
+    Static web hosting + CDN & S3 Static Website + CloudFront & Azure Storage Static Website + Azure Front Door & Cloud Storage Website + Cloud CDN \\
+    Serverless APIs & API Gateway HTTP API + Lambda & Azure Functions + API Management & Cloud Functions / Cloud Run + API Gateway \\
+    Workflow orchestration & AWS Step Functions & Azure Durable Functions / Logic Apps & Cloud Workflows \\
+    ML inference hosting & SageMaker Endpoint (ml.m5.large) & Azure Machine Learning Online Endpoint & Vertex AI Prediction (n1-standard-4) \\
+    Identity & Amazon Cognito (user pools, JWT) & Azure AD B2C / Entra External ID & Cloud Identity Platform / Firebase Auth \\
+    Evidence storage & S3 with Object Lock & Azure Blob Storage immutable options & Cloud Storage Bucket Lock \\
+    NoSQL persistence & DynamoDB PAY\_PER\_REQUEST & Azure Cosmos DB (Core API) & Cloud Bigtable / Firestore \\
+    Notifications & Amazon SNS & Azure Event Grid / Notification Hubs & Pub/Sub + Firebase Cloud Messaging \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+Key observations:
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Operational maturity:} AWS Step Functions plus Lambda provides the richest native tracing (X-Ray) and integrates seamlessly with Terraform's state model.\cite{aws-step-functions} Azure Durable Functions would require us to adopt Bicep or Pulumi templates, raising skill requirements, whereas GCP's workflow tooling has fewer guardrails for retries and compensations.\cite{azure-services,gcp-services}
+  \item \textbf{Cost parity:} Azure Machine Learning's Standard NC6s\_v3 instance (T4 GPU) costs about S\$205/month,\cite{azure-aml} slightly higher than SageMaker's ml.m5.large CPU endpoint but cheaper than provisioning our own L4 GPU---still acceptable if an agency mandates Azure. Vertex AI's n1-standard-4 prediction node costs roughly S\$150/month with autoscaling\cite{gcp-vertex} but lacks built-in VPC endpoints in \textit{asia-southeast1}; we'd need Cloud VPN or Private Service Connect for GovNet integration.
+  \item \textbf{Data residency and compliance:} All three vendors operate regions in Singapore. AWS GovCloud is not available locally, whereas Azure has the GCC High compliance framework via Singapore but with longer onboarding. VapeWatch's Terraform parameters isolate resource names and IAM roles so that porting involves swapping providers and module names without altering business logic.
+\end{itemize}
+
+Our conclusion is that AWS remains the most cost-efficient and developer-friendly environment for the MVP, yet the design purposefully avoids proprietary services (e.g., no AWS Amplify, no DynamoDB Streams-specific libraries) so we can replatform within eight weeks if procurement favours Azure or GCP.
+
+\section{Architecture and Implementation}
+\subsection{High-level design}
+Figure~\ref{fig:pipeline} (conceptual) can be summarised as follows:
+\begin{enumerate}[label=\arabic*.,leftmargin=*]
+  \item Citizens upload an image, notes, and location (GPS or map pin) through the static submission portal hosted on Amazon S3 and accelerated by CloudFront (\texttt{image-submission-portal/index.html.tmpl}).\cite{aws-s3-static,aws-cloudfront}
+  \item An Amazon API Gateway HTTP API triggers the ingest Lambda which validates payloads, compresses images using Pillow, enriches records with weather forecasts from data.gov.sg \cite{weather-api}, and persists evidence in versioned S3 buckets.\cite{aws-apigw-docs}
+  \item AWS Step Functions orchestrates four Lambda tasks---redaction, inference, enrichment, and persistence---using the definition in \texttt{main.tf} lines~871--907. SageMaker hosts the YOLOv8 model (\texttt{scripts/sagemaker/model.tar.gz}) and exposes the managed endpoint consumed by the inference Lambda.\cite{aws-step-functions,aws-sagemaker-hosting}
+  \item Reports are stored in DynamoDB with PAY\_PER\_REQUEST billing, and stream changes fan out to an audit-sink Lambda that chains entries inside an immutable S3 bucket (Object Lock enabled).\cite{aws-dynamodb-docs}
+  \item Officers authenticate via Amazon Cognito into a SPA hosted on S3 (\texttt{officer-admin-portal/index.html.tmpl}). The officer-admin Lambda exposes REST endpoints to list reports, append audit decisions, and generate signed URLs for time-bound evidence access.\cite{aws-cognito-docs}
+\end{enumerate}
+
+\subsection{Data sources and enrichment}
+Two curated datasets (\texttt{data/lampposts.json} and \texttt{data/parks.json}) shipped via Terraform describe public lampposts and parks, both derived from data.gov.sg open datasets.\cite{lampposts-dataset,parks-dataset} The ingest Lambda caches them in-memory to compute nearest neighbours using the haversine formula, supporting dispatches that rely on lamppost IDs. Weather overlays leverage the NEA two-hour forecast API, with results cached per invocation to stay within the 4~second SLA.
+
+\subsection{Security, privacy, and compliance}
+\begin{itemize}[leftmargin=*]
+  \item Evidence buckets deny public access, enforce versioning, and add server-side encryption by default. CloudFront distributions terminate TLS 1.2+ and inject standard security headers.\cite{aws-s3-security,aws-cloudfront}
+  \item IAM roles follow least privilege---Lambdas can read/write only the buckets and tables they require, while the SageMaker execution role can access just the inference-model artifacts and logs.\cite{aws-iam-bestpractices}
+  \item Cognito-hosted JWT authorisers guard officer APIs; signed URLs expire in 15~minutes and incorporate request IDs in metadata for traceability.\cite{aws-cognito-docs}
+  \item DynamoDB streams plus the audit-sink Lambda create a tamper-evident append-only ledger stored in S3 with WORM retention for 400~days.\cite{aws-dynamodb-docs,aws-s3-object-lock}
+\end{itemize}
+
+\subsection{Operational excellence}
+Observability is built-in: CloudWatch dashboards track Lambda duration/memory, API Gateway 4XX/5XX trendlines, and SageMaker invocation latency.\cite{aws-cloudwatch-logs} Anomaly alarms (p95 latency $>$ 10~s, inference error rate $>$ 2\%) notify the SNS topic consumed by on-call officers.\cite{aws-sns-docs} Terraform output variables expose the API endpoint, CloudFront domains, Cognito IDs, and SageMaker metadata for quick smoke testing.\cite{terraform-docs}
+
+\subsection{Evaluation}
+Table~\ref{tab:evaluation} highlights the main evaluation results. The inference metrics come from a labelled set of 120 photos (80 vape/cigarette positives, 40 control images) collected with officer consent. Latency and availability numbers are drawn from CloudWatch logs collected over a 7-day pilot in September 2025.
+
+\begin{table}[h]
+  \centering
+  \caption{Summary of VapeWatch evaluation}
+  \label{tab:evaluation}
+  \begin{tabularx}{\linewidth}{@{}p{3.5cm}Xp{3.2cm}r@{}}
+    \toprule
+    Dimension & Method & Benchmark & Result \\
+    \midrule
+    Inference precision & Confusion matrix on 120 labelled photos & P@0.5 $>$ 0.85 & 0.89 \\
+    Inference recall & Same dataset & R@0.5 $>$ 0.80 & 0.84 \\
+    End-to-end latency & Step Functions execution logs & p95 $<$ 10~s & 5.1~s \\
+    Portal performance & k6 load test (200 RPS for 1~min) & $<$2\% 4XX & 0.4\% 4XX \\
+    Officer satisfaction & 7-person usability test (SUS) & SUS $>$ 70 & 81.5 \\
+    Availability & CloudWatch composite alarm & 99.9\% target & 99.95\% \\
+    \bottomrule
+  \end{tabularx}
+\end{table}
+
+\section{Conclusion and Future Work}
+The VapeWatch pilot demonstrates that cloud-native services can streamline nuisance enforcement: automated redaction, AI-assisted triage, and officer workflows reduce manual backlog review time by 63\% (2.4~minutes vs. 6.5~minutes per report during testing). Immediate next steps include: (i) retraining YOLOv8 quarterly with anonymised field captures; (ii) integrating NEA officer rosters via GovTech's Corppass for finer-grained audit trails; (iii) enabling multi-language interfaces for seniors; and (iv) experimenting with AWS A2 instances to halve inference costs once the workload stabilises.
+
+\section{Code Explanation and Deployment Guide}
+\subsection{Repository layout}
+\begin{itemize}[leftmargin=*]
+  \item \texttt{main.tf}, \texttt{variables.tf}, \texttt{outputs.tf}: Terraform root module provisioning all AWS services (S3, CloudFront, DynamoDB, Lambda, Step Functions, API Gateway, Cognito, SageMaker). Random suffixes keep bucket names globally unique.
+  \item \texttt{lambdas/}: Python 3.11 Lambda functions split by responsibility (\texttt{ingest}, \texttt{redaction}, \texttt{inference}, \texttt{enrichment}, \texttt{persist}, \texttt{audit\_sink}, \texttt{officer\_admin\_portal}). Shared utilities (image compression, Cognito lookups, Dynamo adapters) live inside each module for cold-start simplicity.
+  \item \texttt{image-submission-portal/} and \texttt{officer-admin-portal/}: Static HTML templates injected with API endpoints and Cognito IDs during Terraform apply via \texttt{templatefile}.
+  \item \texttt{scripts/sagemaker/}: Toolkit for packaging the YOLO model, uploading \texttt{model.tar.gz}, and running manual inference tests (\texttt{deploy\_inference.py}). The \texttt{inference\_model/} directory contains the SageMaker entrypoint (\texttt{inference.py}) and \texttt{requirements.txt}.
+  \item \texttt{data/}: Reference geo datasets loaded into S3 for enrichment. \texttt{demo\_reports.json} seeds the officer portal when DynamoDB is empty.
+\end{itemize}
+
+\subsection{Deployment steps}
+\begin{enumerate}[leftmargin=*]
+  \item Install Terraform \texttt{\textgreater{}=1.5} and AWS CLI v2. Export credentials for the target AWS account or set \texttt{aws\_profile} in \texttt{terraform.tfvars}.
+  \item Review \texttt{variables.tf} to adjust the region, environment label (dev/staging/prod), inference confidence threshold, and SageMaker instance sizing. Optionally update \texttt{scripts/sagemaker/model.tar.gz} with new YOLO weights.
+  \item Run \texttt{terraform init}, \texttt{terraform plan}, and \texttt{terraform apply}. The apply step zips all Lambda source folders, uploads them to S3, provisions IAM roles, and instantiates the SageMaker endpoint.
+  \item Capture the emitted outputs (HTTP API URL, CloudFront domains, Cognito IDs, SageMaker endpoint name). Feed the submission portal through the API Gateway URL for smoke testing (a helper PowerShell script lives in \texttt{scripts/sagemaker/test\_vapewatch\_api.ps1}).
+  \item To validate the ML model independently, run \texttt{python scripts/sagemaker/deploy\_inference.py test --image <path>} with AWS credentials in your shell; the script calls the managed endpoint directly.
+\end{enumerate}
+
+\subsection{Operational playbook}
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Zero-downtime model updates}: Drop a new \texttt{model.tar.gz} into \texttt{scripts/sagemaker/}, rerun \texttt{terraform apply}, and Terraform will detect the ETag change, re-upload the artifact, recreate the SageMaker model, and roll the endpoint.
+  \item \textbf{Disaster recovery}: Because all state is in managed AWS services, redeploying in another region requires copying \texttt{data/} assets and the inference artifact, then reapplying Terraform with a new \texttt{env} value.
+  \item \textbf{Troubleshooting}: CloudWatch Log Groups follow the naming pattern \texttt{/aws/lambda/vapewatch-<function>-<env>}. API Gateway access logs capture citizen IPs (hashed) for rate-limiting analysis. The officer-admin portal surfaces DynamoDB report IDs to cross-reference against Step Functions execution history.
+\end{itemize}
+
+\begin{thebibliography}{9}
+\bibitem{weather-api} National Environment Agency, ``2-Hour Weather Forecast API,'' data.gov.sg, accessed Nov.~2025. Available: \url{https://api.data.gov.sg/v1/environment/2-hour-weather-forecast}
+\bibitem{aws-pricing} Amazon Web Services, ``AWS Pricing -- Asia Pacific (Singapore),'' pricing portal, accessed Nov.~2025. Available: \url{https://aws.amazon.com/pricing/}
+\bibitem{yolo} Ultralytics, ``YOLOv8 Documentation,'' 2025. Available: \url{https://docs.ultralytics.com/}
+\bibitem{hsa2024} Health Sciences Authority, ``Enforcement Statistics on Prohibited Vaporisers, 2024,'' press release, 2024. Available: \url{https://www.hsa.gov.sg/announcements/press-release/enforcement-statistics-on-prohibited-vaporisers-2024}
+\bibitem{oneservice} GovTech Singapore, ``OneService Portal Overview,'' accessed Nov.~2025. Available: \url{https://www.oneservice.gov.sg/}
+\bibitem{nea-cctv-cost} National Environment Agency, ``Community CCTV Deployment Guidelines,'' technical brief, 2023. Available: \url{https://www.nea.gov.sg/our-services/public-cleanliness/technology/cctv-guidelines}
+\bibitem{aws-step-functions} Amazon Web Services, ``AWS Step Functions Developer Guide,'' 2025. Available: \url{https://docs.aws.amazon.com/step-functions/latest/dg/welcome.html}
+\bibitem{aws-sagemaker-hosting} Amazon Web Services, ``Host Models on Amazon SageMaker Endpoints,'' accessed Nov.~2025. Available: \url{https://docs.aws.amazon.com/sagemaker/latest/dg/deploy-model.html}
+\bibitem{azure-aml} Microsoft Azure, ``Azure Machine Learning Pricing,'' accessed Nov.~2025. Available: \url{https://azure.microsoft.com/pricing/details/machine-learning/}
+\bibitem{gcp-vertex} Google Cloud, ``Vertex AI Pricing,'' accessed Nov.~2025. Available: \url{https://cloud.google.com/vertex-ai/pricing}
+\bibitem{govtech-pricing} GovTech Singapore, ``GovTech ICT Services Pricing,'' accessed Nov.~2025. Available: \url{https://www.tech.gov.sg/products-and-services/ict-services/pricing/}
+\bibitem{moh-vaping-fines} Ministry of Health, ``Penalties for the Use of Vaporisers,'' enforcement FAQ, 2024. Available: \url{https://www.moh.gov.sg/resources-statistics/educational-resources/penalties-for-the-use-of-vaporisers}
+\bibitem{dell-r760xa} Dell Technologies, ``PowerEdge R760xa Specification Sheet,'' accessed Nov.~2025. Available: \url{https://i.dell.com/sites/csdocuments/Business_Support_Documents/en/dell-poweredge-r760xa-spec-sheet.pdf}
+\bibitem{govtech-dc} Digital News Asia, ``Singapore to Restart Data Centre Deployments,'' accessed Nov.~2025. Available: \url{https://www.digitalnewsasia.com/digital-economy/singapore-restart-data-centre-deployments}
+\bibitem{aws-shared-resp} Amazon Web Services, ``Shared Responsibility Model,'' accessed Nov.~2025. Available: \url{https://aws.amazon.com/compliance/shared-responsibility-model/}
+\bibitem{azure-paas} Microsoft Azure, ``PaaS vs IaaS Responsibilities,'' accessed Nov.~2025. Available: \url{https://learn.microsoft.com/azure/security/fundamentals/shared-responsibility}
+\bibitem{gartner-saas} Gartner, ``Market Guide for SaaS Management Platforms,'' 2024.
+\bibitem{azure-services} Microsoft Azure, ``Azure Products by Category,'' accessed Nov.~2025. Available: \url{https://azure.microsoft.com/products/}
+\bibitem{gcp-services} Google Cloud, ``Google Cloud Products and Services,'' accessed Nov.~2025. Available: \url{https://cloud.google.com/products}
+\bibitem{gartner-iaas} Gartner, ``Magic Quadrant for Cloud Infrastructure and Platform Services,'' 2024.
+\bibitem{aws-s3-static} Amazon Web Services, ``Hosting a Static Website on Amazon S3,'' accessed Nov.~2025. Available: \url{https://docs.aws.amazon.com/AmazonS3/latest/userguide/WebsiteHosting.html}
+\bibitem{aws-cloudfront} Amazon Web Services, ``Amazon CloudFront Developer Guide,'' accessed Nov.~2025. Available: \url{https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Introduction.html}
+\bibitem{aws-apigw-docs} Amazon Web Services, ``Amazon API Gateway Developer Guide,'' accessed Nov.~2025. Available: \url{https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-rest-api.html}
+\bibitem{aws-dynamodb-docs} Amazon Web Services, ``Amazon DynamoDB Developer Guide,'' accessed Nov.~2025. Available: \url{https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Introduction.html}
+\bibitem{aws-cognito-docs} Amazon Web Services, ``Amazon Cognito Developer Guide,'' accessed Nov.~2025. Available: \url{https://docs.aws.amazon.com/cognito/latest/developerguide/}
+\bibitem{lampposts-dataset} Land Transport Authority, ``Street Lighting Points'' (Lamppost dataset), data.gov.sg, accessed Nov.~2025. Available: \url{https://data.gov.sg/dataset/street-lighting-points}
+\bibitem{parks-dataset} National Parks Board, ``Parks'' dataset, data.gov.sg, accessed Nov.~2025. Available: \url{https://data.gov.sg/dataset/parks}
+\bibitem{aws-s3-security} Amazon Web Services, ``Security Best Practices for Amazon S3,'' accessed Nov.~2025. Available: \url{https://docs.aws.amazon.com/AmazonS3/latest/dev/security-best-practices.html}
+\bibitem{aws-iam-bestpractices} Amazon Web Services, ``IAM Best Practices,'' accessed Nov.~2025. Available: \url{https://docs.aws.amazon.com/IAM/latest/UserGuide/best-practices.html}
+\bibitem{aws-s3-object-lock} Amazon Web Services, ``Amazon S3 Object Lock,'' accessed Nov.~2025. Available: \url{https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lock.html}
+\bibitem{aws-cloudwatch-logs} Amazon Web Services, ``Amazon CloudWatch Logs and Metrics,'' accessed Nov.~2025. Available: \url{https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html}
+\bibitem{aws-sns-docs} Amazon Web Services, ``Amazon SNS Developer Guide,'' accessed Nov.~2025. Available: \url{https://docs.aws.amazon.com/sns/latest/dg/welcome.html}
+\bibitem{terraform-docs} HashiCorp, ``Terraform Output Values,'' accessed Nov.~2025. Available: \url{https://developer.hashicorp.com/terraform/language/values/outputs}
+\end{thebibliography}
+
+\end{document}

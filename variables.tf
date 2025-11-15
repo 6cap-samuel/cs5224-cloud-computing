@@ -37,3 +37,21 @@ variable "park_max_distance_meters" {
   type        = number
   default     = 750
 }
+
+variable "inference_confidence_threshold" {
+  description = "Default confidence threshold passed to the SageMaker inference endpoint"
+  type        = number
+  default     = 0.5
+}
+
+variable "sagemaker_instance_type" {
+  description = "Instance type for the managed SageMaker endpoint"
+  type        = string
+  default     = "ml.m5.large"
+}
+
+variable "sagemaker_initial_instance_count" {
+  description = "Number of instances for the SageMaker endpoint"
+  type        = number
+  default     = 1
+}

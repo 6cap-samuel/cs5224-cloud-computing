@@ -21,8 +21,18 @@ provider "aws" {
   profile = var.aws_profile
 }
 
+data "aws_caller_identity" "current" {}
+
 resource "random_id" "suffix" {
   byte_length = 4
+}
+
+locals {
+  sagemaker_endpoint_name = "vapewatch-endpoint-${var.env}"
+  sagemaker_model_name    = "vapewatch-model-${var.env}"
+  sagemaker_model_key     = "model.tar.gz"
+  sagemaker_model_path    = "${path.module}/scripts/sagemaker/model.tar.gz"
+  sagemaker_pytorch_image = "763104351884.dkr.ecr.${var.region}.amazonaws.com/pytorch-inference:2.0.0-cpu-py310"
 }
 
 # ----------------------
@@ -70,7 +80,7 @@ resource "aws_s3_bucket_public_access_block" "evidence_pab" {
 
 # Immutable audit log with S3 Object Lock (WORM)
 resource "aws_s3_bucket" "audit_log" {
-  bucket              = "vapewatch-audit-${var.env}-${random_id.suffix.hex}"
+  bucket        = "vapewatch-audit-${var.env}-${random_id.suffix.hex}"
   force_destroy = true
 }
 
@@ -81,6 +91,27 @@ resource "aws_s3_bucket_public_access_block" "audit_pab" {
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket" "inference_models" {
+  bucket        = "vapewatch-inference-${var.env}-${random_id.suffix.hex}"
+  force_destroy = true
+}
+
+resource "aws_s3_bucket_public_access_block" "inference_models" {
+  bucket                  = aws_s3_bucket.inference_models.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_object" "inference_model_artifact" {
+  bucket       = aws_s3_bucket.inference_models.bucket
+  key          = local.sagemaker_model_key
+  source       = local.sagemaker_model_path
+  etag         = filemd5(local.sagemaker_model_path)
+  content_type = "application/x-tar"
 }
 
 # ----------------------
@@ -119,7 +150,7 @@ resource "aws_s3_bucket_website_configuration" "image_submission_portal" {
 resource "aws_s3_bucket_policy" "image_submission_portal" {
   bucket = aws_s3_bucket.image_submission_portal.id
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         Sid       = "AllowPublicRead"
@@ -262,7 +293,7 @@ resource "aws_s3_bucket_website_configuration" "officer_admin_portal" {
 resource "aws_s3_bucket_policy" "officer_admin_portal" {
   bucket = aws_s3_bucket.officer_admin_portal.id
   policy = jsonencode({
-    Version   = "2012-10-17"
+    Version = "2012-10-17"
     Statement = [
       {
         Sid       = "AllowPublicRead"
@@ -429,12 +460,12 @@ resource "aws_cognito_user_pool" "officers" {
 }
 
 resource "aws_cognito_user_pool_client" "officers" {
-  name                         = "vapewatch-officers-client-${var.env}"
-  user_pool_id                 = aws_cognito_user_pool.officers.id
-  generate_secret              = false
-  explicit_auth_flows          = ["ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
+  name                          = "vapewatch-officers-client-${var.env}"
+  user_pool_id                  = aws_cognito_user_pool.officers.id
+  generate_secret               = false
+  explicit_auth_flows           = ["ALLOW_USER_PASSWORD_AUTH", "ALLOW_REFRESH_TOKEN_AUTH"]
   prevent_user_existence_errors = "ENABLED"
-  supported_identity_providers = ["COGNITO"]
+  supported_identity_providers  = ["COGNITO"]
 }
 
 # ----------------------
@@ -494,8 +525,8 @@ data "aws_iam_policy_document" "lambda_inline" {
   }
 
   statement {
-    sid = "CognitoUserLookup"
-    actions = ["cognito-idp:AdminGetUser"]
+    sid       = "CognitoUserLookup"
+    actions   = ["cognito-idp:AdminGetUser"]
     resources = [aws_cognito_user_pool.officers.arn]
   }
 
@@ -509,6 +540,14 @@ data "aws_iam_policy_document" "lambda_inline" {
     sid       = "StartStateMachine"
     actions   = ["states:StartExecution"]
     resources = ["*"]
+  }
+
+  statement {
+    sid     = "InvokeSageMakerEndpoint"
+    actions = ["sagemaker:InvokeEndpoint"]
+    resources = [
+      "arn:aws:sagemaker:${var.region}:${data.aws_caller_identity.current.account_id}:endpoint/${local.sagemaker_endpoint_name}"
+    ]
   }
 }
 
@@ -560,6 +599,65 @@ resource "aws_iam_role_policy_attachment" "sfn_inline_attach" {
   policy_arn = aws_iam_policy.sfn_inline.arn
 }
 
+data "aws_iam_policy_document" "sagemaker_assume" {
+  statement {
+    actions = ["sts:AssumeRole"]
+    principals {
+      type        = "Service"
+      identifiers = ["sagemaker.amazonaws.com"]
+    }
+  }
+}
+
+resource "aws_iam_role" "sagemaker_exec" {
+  name               = "vapewatch-sagemaker-exec-${var.env}"
+  assume_role_policy = data.aws_iam_policy_document.sagemaker_assume.json
+}
+
+data "aws_iam_policy_document" "sagemaker_permissions" {
+  statement {
+    actions = [
+      "s3:GetObject",
+      "s3:GetObjectVersion",
+      "s3:ListBucket"
+    ]
+    resources = [
+      aws_s3_bucket.inference_models.arn,
+      "${aws_s3_bucket.inference_models.arn}/*"
+    ]
+  }
+
+  statement {
+    actions = [
+      "logs:CreateLogStream",
+      "logs:CreateLogGroup",
+      "logs:PutLogEvents"
+    ]
+    resources = ["arn:aws:logs:${var.region}:${data.aws_caller_identity.current.account_id}:*"]
+  }
+
+  statement {
+    actions = [
+      "ecr:GetAuthorizationToken",
+      "ecr:BatchGetImage",
+      "ecr:GetDownloadUrlForLayer"
+    ]
+    resources = ["*"]
+  }
+
+}
+
+resource "aws_iam_role_policy" "sagemaker_permissions" {
+  name   = "vapewatch-sagemaker-permissions-${var.env}"
+  role   = aws_iam_role.sagemaker_exec.id
+  policy = data.aws_iam_policy_document.sagemaker_permissions.json
+}
+
+resource "aws_iam_role_policy_attachment" "sagemaker_ecr_readonly" {
+  role       = aws_iam_role.sagemaker_exec.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
+
 # ----------------------
 # Package Lambdas (zip)
 # ----------------------
@@ -609,33 +707,35 @@ data "archive_file" "officer_admin_zip" {
 # Lambda functions
 # ----------------------
 resource "aws_lambda_function" "ingest" {
-  function_name = "vapewatch-ingest-${var.env}"
-  role          = aws_iam_role.lambda_exec.arn
-  filename      = data.archive_file.ingest_zip.output_path
-  handler       = "main.lambda_handler"
-  runtime       = "python3.11"
+  function_name    = "vapewatch-ingest-${var.env}"
+  role             = aws_iam_role.lambda_exec.arn
+  filename         = data.archive_file.ingest_zip.output_path
+  source_code_hash = data.archive_file.ingest_zip.output_base64sha256
+  handler          = "main.lambda_handler"
+  runtime          = "python3.11"
   environment {
     variables = {
-      STATE_MACHINE_ARN           = aws_sfn_state_machine.pipeline.arn
-      RAW_BUCKET                  = aws_s3_bucket.raw.bucket
-      EVIDENCE_BUCKET             = aws_s3_bucket.evidence.bucket
-      LAMPPOST_DATA_BUCKET        = aws_s3_bucket.raw.bucket
-      LAMPPOST_DATA_KEY           = aws_s3_object.lamppost_dataset.key
+      STATE_MACHINE_ARN            = aws_sfn_state_machine.pipeline.arn
+      RAW_BUCKET                   = aws_s3_bucket.raw.bucket
+      EVIDENCE_BUCKET              = aws_s3_bucket.evidence.bucket
+      LAMPPOST_DATA_BUCKET         = aws_s3_bucket.raw.bucket
+      LAMPPOST_DATA_KEY            = aws_s3_object.lamppost_dataset.key
       LAMPPOST_MAX_DISTANCE_METERS = var.lamppost_max_distance_meters
-      PARK_DATA_BUCKET            = aws_s3_bucket.raw.bucket
-      PARK_DATA_KEY               = aws_s3_object.park_dataset.key
-      PARK_MAX_DISTANCE_METERS    = var.park_max_distance_meters
+      PARK_DATA_BUCKET             = aws_s3_bucket.raw.bucket
+      PARK_DATA_KEY                = aws_s3_object.park_dataset.key
+      PARK_MAX_DISTANCE_METERS     = var.park_max_distance_meters
     }
   }
   depends_on = [aws_s3_object.lamppost_dataset, aws_s3_object.park_dataset]
 }
 
 resource "aws_lambda_function" "redaction" {
-  function_name = "vapewatch-redaction-${var.env}"
-  role          = aws_iam_role.lambda_exec.arn
-  filename      = data.archive_file.redaction_zip.output_path
-  handler       = "main.lambda_handler"
-  runtime       = "python3.11"
+  function_name    = "vapewatch-redaction-${var.env}"
+  role             = aws_iam_role.lambda_exec.arn
+  filename         = data.archive_file.redaction_zip.output_path
+  source_code_hash = data.archive_file.redaction_zip.output_base64sha256
+  handler          = "main.lambda_handler"
+  runtime          = "python3.11"
   environment {
     variables = {
       RAW_BUCKET      = aws_s3_bucket.raw.bucket
@@ -645,27 +745,37 @@ resource "aws_lambda_function" "redaction" {
 }
 
 resource "aws_lambda_function" "inference" {
-  function_name = "vapewatch-inference-${var.env}"
-  role          = aws_iam_role.lambda_exec.arn
-  filename      = data.archive_file.inference_zip.output_path
-  handler       = "main.lambda_handler"
-  runtime       = "python3.11"
+  function_name    = "vapewatch-inference-${var.env}"
+  role             = aws_iam_role.lambda_exec.arn
+  filename         = data.archive_file.inference_zip.output_path
+  source_code_hash = data.archive_file.inference_zip.output_base64sha256
+  handler          = "main.lambda_handler"
+  runtime          = "python3.11"
+  timeout          = 15
+  environment {
+    variables = {
+      SAGEMAKER_ENDPOINT_NAME        = local.sagemaker_endpoint_name
+      INFERENCE_CONFIDENCE_THRESHOLD = tostring(var.inference_confidence_threshold)
+    }
+  }
 }
 
 resource "aws_lambda_function" "enrichment" {
-  function_name = "vapewatch-enrichment-${var.env}"
-  role          = aws_iam_role.lambda_exec.arn
-  filename      = data.archive_file.enrichment_zip.output_path
-  handler       = "main.lambda_handler"
-  runtime       = "python3.11"
+  function_name    = "vapewatch-enrichment-${var.env}"
+  role             = aws_iam_role.lambda_exec.arn
+  filename         = data.archive_file.enrichment_zip.output_path
+  source_code_hash = data.archive_file.enrichment_zip.output_base64sha256
+  handler          = "main.lambda_handler"
+  runtime          = "python3.11"
 }
 
 resource "aws_lambda_function" "persist" {
-  function_name = "vapewatch-persist-${var.env}"
-  role          = aws_iam_role.lambda_exec.arn
-  filename      = data.archive_file.persist_zip.output_path
-  handler       = "main.lambda_handler"
-  runtime       = "python3.11"
+  function_name    = "vapewatch-persist-${var.env}"
+  role             = aws_iam_role.lambda_exec.arn
+  filename         = data.archive_file.persist_zip.output_path
+  source_code_hash = data.archive_file.persist_zip.output_base64sha256
+  handler          = "main.lambda_handler"
+  runtime          = "python3.11"
   environment {
     variables = {
       REPORTS_TABLE = aws_dynamodb_table.reports.name
@@ -676,11 +786,12 @@ resource "aws_lambda_function" "persist" {
 
 # Audit sink: DDB stream -> append-only S3 WORM (hash chain done in code)
 resource "aws_lambda_function" "audit_sink" {
-  function_name = "vapewatch-audit-sink-${var.env}"
-  role          = aws_iam_role.lambda_exec.arn
-  filename      = data.archive_file.audit_zip.output_path
-  handler       = "main.lambda_handler"
-  runtime       = "python3.11"
+  function_name    = "vapewatch-audit-sink-${var.env}"
+  role             = aws_iam_role.lambda_exec.arn
+  filename         = data.archive_file.audit_zip.output_path
+  source_code_hash = data.archive_file.audit_zip.output_base64sha256
+  handler          = "main.lambda_handler"
+  runtime          = "python3.11"
   environment {
     variables = {
       AUDIT_BUCKET = aws_s3_bucket.audit_log.bucket
@@ -689,16 +800,17 @@ resource "aws_lambda_function" "audit_sink" {
 }
 
 resource "aws_lambda_function" "officer_admin" {
-  function_name = "vapewatch-officer-admin-${var.env}"
-  role          = aws_iam_role.lambda_exec.arn
-  filename      = data.archive_file.officer_admin_zip.output_path
-  handler       = "main.lambda_handler"
-  runtime       = "python3.11"
+  function_name    = "vapewatch-officer-admin-${var.env}"
+  role             = aws_iam_role.lambda_exec.arn
+  filename         = data.archive_file.officer_admin_zip.output_path
+  source_code_hash = data.archive_file.officer_admin_zip.output_base64sha256
+  handler          = "main.lambda_handler"
+  runtime          = "python3.11"
   environment {
     variables = {
-      REPORTS_TABLE  = aws_dynamodb_table.reports.name
-      RAW_BUCKET     = aws_s3_bucket.raw.bucket
-      SIGNED_URL_TTL = "900"
+      REPORTS_TABLE        = aws_dynamodb_table.reports.name
+      RAW_BUCKET           = aws_s3_bucket.raw.bucket
+      SIGNED_URL_TTL       = "900"
       COGNITO_USER_POOL_ID = aws_cognito_user_pool.officers.id
     }
   }
@@ -708,6 +820,52 @@ resource "aws_lambda_event_source_mapping" "reports_stream" {
   event_source_arn  = aws_dynamodb_table.reports.stream_arn
   function_name     = aws_lambda_function.audit_sink.arn
   starting_position = "LATEST"
+}
+
+# ----------------------
+# SageMaker managed endpoint
+# ----------------------
+resource "aws_sagemaker_model" "inference" {
+  name               = local.sagemaker_model_name
+  execution_role_arn = aws_iam_role.sagemaker_exec.arn
+  lifecycle {
+    replace_triggered_by = [aws_s3_object.inference_model_artifact.etag]
+  }
+
+  primary_container {
+    image          = local.sagemaker_pytorch_image
+    mode           = "SingleModel"
+    model_data_url = "s3://${aws_s3_bucket.inference_models.bucket}/${aws_s3_object.inference_model_artifact.key}"
+    environment = {
+      SAGEMAKER_PROGRAM          = "inference.py"
+      SAGEMAKER_SUBMIT_DIRECTORY = "s3://${aws_s3_bucket.inference_models.bucket}/${aws_s3_object.inference_model_artifact.key}"
+      SAGEMAKER_REGION           = var.region
+    }
+  }
+
+  depends_on = [aws_s3_object.inference_model_artifact]
+}
+
+resource "aws_sagemaker_endpoint_configuration" "inference" {
+  name = "${local.sagemaker_endpoint_name}-config"
+  lifecycle {
+    replace_triggered_by = [aws_sagemaker_model.inference.id]
+  }
+
+  production_variants {
+    variant_name           = "AllTraffic"
+    model_name             = aws_sagemaker_model.inference.name
+    initial_instance_count = var.sagemaker_initial_instance_count
+    instance_type          = var.sagemaker_instance_type
+  }
+}
+
+resource "aws_sagemaker_endpoint" "inference" {
+  name                 = local.sagemaker_endpoint_name
+  endpoint_config_name = aws_sagemaker_endpoint_configuration.inference.name
+  lifecycle {
+    replace_triggered_by = [aws_sagemaker_endpoint_configuration.inference.id]
+  }
 }
 
 # ----------------------

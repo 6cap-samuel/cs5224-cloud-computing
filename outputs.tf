@@ -27,3 +27,19 @@ output "officer_portal_distribution_domain" {
 output "officer_portal_distribution_url" {
   value = "https://${aws_cloudfront_distribution.officer_admin_portal.domain_name}"
 }
+
+output "inference_model_bucket" {
+  value = aws_s3_bucket.inference_models.bucket
+}
+
+output "inference_endpoint_name" {
+  value = aws_sagemaker_endpoint.inference.name
+}
+
+output "inference_model_name" {
+  value = aws_sagemaker_model.inference.name
+}
+
+output "inference_endpoint_arn" {
+  value = aws_sagemaker_endpoint.inference.arn
+}

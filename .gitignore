@@ -12,3 +12,4 @@ terraform.tfstate.backup
 
 # Build artifacts
 artifacts/*.zip
+scripts/sagemaker/deploy_config.json

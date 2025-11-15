@@ -1,0 +1,65 @@
+flowchart LR
+  citizen["👤 Citizen Browser"]
+  officer["🛡️ Officer Browser"]
+
+  subgraph CitizenPortal["Citizen Submission Portal\n(ap-southeast-1)"]
+    s3citizen["🗂️ S3 Static Website"]
+    cfCitizen["🌐 CloudFront Distribution"]
+    citizen --> cfCitizen --> s3citizen
+  end
+
+  subgraph OfficerPortal["Officer Admin Portal\n(ap-southeast-1)"]
+    s3officer["🗂️ S3 Static Website"]
+    cfOfficer["🌐 CloudFront Distribution"]
+    officer --> cfOfficer --> s3officer
+  end
+
+  apigw["🧭 API Gateway HTTP API\nRegion: ap-southeast-1"]
+  cfCitizen --> apigw
+  cfOfficer --> apigw
+
+  ingest["λ Lambda: ingest"]
+  officerLambda["λ Lambda: officer_admin"]
+  apigw -->|POST /reports| ingest
+  apigw -->|"GET /reports,<br/>POST /reports/{id}/audit,<br/>GET /reports/{id}/history"| officerLambda
+
+  sfn["🔁 Step Functions Pipeline"]
+  ingest -->|StartExecution| sfn
+
+  redaction["λ Lambda: redaction"]
+  inference["λ Lambda: inference"]
+  enrichment["λ Lambda: enrichment"]
+  persist["λ Lambda: persist"]
+  sfn --> redaction --> inference --> enrichment --> persist
+
+  sagemaker["🧠 SageMaker Endpoint (YOLOv8)\n(ap-southeast-1)"]
+  inference -->|Invoke| sagemaker
+
+  raw["🪣 S3 Raw Bucket\n(ap-southeast-1)"]
+  evidence["🪣 S3 Evidence Bucket\n(ap-southeast-1)"]
+  auditS3["🪣 S3 Audit Log (Object Lock)\n(ap-southeast-1)"]
+  datasets["🗂️ S3 Ref Data (lampposts/parks)<br/>(data.gov.sg)"]
+  ingest --> raw
+  redaction --> raw
+  raw --> evidence
+  ingest --> datasets
+  inference --> raw
+
+  weatherApi["🌦️ data.gov.sg Weather API"]
+  ingest -->|"2-hour forecast"| weatherApi
+
+  ddb["📚 DynamoDB Reports Table\n(ap-southeast-1)"]
+  persist --> ddb
+  officerLambda -->|query & update audit/audit_history| ddb
+
+  auditLambda["λ Lambda: audit_sink"]
+  ddb -->|Stream| auditLambda --> auditS3
+
+  sns["📣 SNS Officer Alerts"]
+  persist --> sns
+
+  cognito["🔐 Amazon Cognito User Pool\n(ap-southeast-1)"]
+  officer --> cognito --> officerLambda
+
+  officerLambda --> raw
+  officerLambda --> evidence

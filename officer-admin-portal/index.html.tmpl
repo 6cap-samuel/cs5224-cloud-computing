@@ -580,6 +580,62 @@
       font-size: 0.8rem;
     }
 
+    .inference-summary {
+      margin: 0;
+      font-size: 0.95rem;
+    }
+
+    .inference-meta {
+      margin: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.35rem 0.75rem;
+    }
+
+    .inference-detections {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .inference-detections li {
+      background: rgba(15, 23, 42, 0.35);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.55rem 0.75rem;
+    }
+
+    .inference-detection-label {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin: 0;
+    }
+
+    .inference-detection-meta {
+      margin: 0.1rem 0 0;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .inference-more {
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .inference-chip {
+      margin: 0.25rem 0 0;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .inference-chip[data-positive="true"] {
+      color: var(--success);
+    }
+
     .modal-backdrop {
       position: fixed;
       inset: 0;
@@ -1648,6 +1704,136 @@
       return span;
     }
 
+    function formatConfidence(value) {
+      if (typeof value !== "number" || !isFinite(value)) {
+        return null;
+      }
+      const bounded = Math.min(Math.max(value, 0), 1);
+      const rounded = Math.round(bounded * 1000) / 10;
+      const text = rounded % 1 === 0 ? rounded.toFixed(0) : rounded.toFixed(1);
+      return text + "%";
+    }
+
+    function getInferenceDetections(report) {
+      if (!report || typeof report !== "object") {
+        return [];
+      }
+      if (Array.isArray(report.detections) && report.detections.length > 0) {
+        return report.detections;
+      }
+      const inference = report.inference;
+      if (inference && typeof inference === "object" && inference.result && Array.isArray(inference.result.detections)) {
+        return inference.result.detections;
+      }
+      return [];
+    }
+
+    function summarizeInferenceResult(report) {
+      if (!report || typeof report !== "object") {
+        return null;
+      }
+      const inference = report.inference && typeof report.inference === "object" ? report.inference : null;
+      const result = inference && typeof inference.result === "object" ? inference.result : null;
+      const detections = getInferenceDetections(report);
+
+      const totalCandidate = typeof report.total_detections === "number"
+        ? report.total_detections
+        : result && typeof result.total_detections === "number"
+          ? result.total_detections
+          : detections.length;
+      const totalDetections = typeof totalCandidate === "number" && isFinite(totalCandidate)
+        ? Math.max(0, Math.round(totalCandidate))
+        : null;
+
+      const thresholdCandidate = typeof report.confidence_threshold === "number"
+        ? report.confidence_threshold
+        : inference && typeof inference.confidence_threshold === "number"
+          ? inference.confidence_threshold
+          : result && typeof result.confidence_threshold === "number"
+            ? result.confidence_threshold
+            : null;
+      const threshold = typeof thresholdCandidate === "number" && isFinite(thresholdCandidate)
+        ? Math.min(Math.max(thresholdCandidate, 0), 1)
+        : null;
+
+      const vapeDetected = typeof report.vape_detected === "boolean"
+        ? report.vape_detected
+        : result && typeof result.vape_detected === "boolean"
+          ? result.vape_detected
+          : null;
+
+      const cigaretteDetected = typeof report.cigarette_detected === "boolean"
+        ? report.cigarette_detected
+        : result && typeof result.cigarette_detected === "boolean"
+          ? result.cigarette_detected
+          : null;
+
+      const endpoint = inference && inference.endpoint ? String(inference.endpoint) : null;
+
+      if (
+        !inference &&
+        !result &&
+        totalDetections === null &&
+        detections.length === 0 &&
+        vapeDetected === null &&
+        cigaretteDetected === null
+      ) {
+        return null;
+      }
+
+      const summaryParts = [];
+      if (totalDetections !== null) {
+        summaryParts.push(totalDetections === 0 ? "No detections" : totalDetections + " detection" + (totalDetections === 1 ? "" : "s"));
+      }
+      if (vapeDetected === true) {
+        summaryParts.push("Vape detected");
+      } else if (vapeDetected === false && totalDetections !== null) {
+        summaryParts.push("No vape detected");
+      }
+      if (cigaretteDetected === true) {
+        summaryParts.push("Cigarette detected");
+      } else if (cigaretteDetected === false && totalDetections !== null) {
+        summaryParts.push("No cigarette detected");
+      }
+
+      const inferenceSummary = summaryParts.length > 0 ? summaryParts.join(" · ") : "Inference results available";
+
+      const detectionDetails = detections
+        .map(function (entry, index) {
+          if (!entry || typeof entry !== "object") {
+            return null;
+          }
+          const label = entry.class_name
+            ? String(entry.class_name)
+            : typeof entry.class_id === "number"
+              ? "Class " + entry.class_id
+              : "Detection " + (index + 1);
+          const confidence = typeof entry.confidence === "number" && isFinite(entry.confidence)
+            ? Math.min(Math.max(entry.confidence, 0), 1)
+            : null;
+          return {
+            label: label,
+            confidence: confidence
+          };
+        })
+        .filter(Boolean);
+
+      const MAX_DETECTIONS = 5;
+      const visibleDetections = detectionDetails.slice(0, MAX_DETECTIONS);
+      const extraDetections = detectionDetails.length > MAX_DETECTIONS ? detectionDetails.length - MAX_DETECTIONS : 0;
+
+      return {
+        summary: inferenceSummary,
+        totalDetections: totalDetections,
+        threshold: threshold,
+        endpoint: endpoint,
+        detections: visibleDetections,
+        extraDetections: extraDetections,
+        vapeDetected: vapeDetected,
+        cigaretteDetected: cigaretteDetected
+      };
+    }
+
     function summarizeWeatherSnapshot(snapshot) {
       if (!snapshot || typeof snapshot !== "object") {
         return null;
@@ -1951,6 +2137,79 @@
       return section;
     }
 
+    function buildInferenceSection(report) {
+      const details = summarizeInferenceResult(report);
+      if (!details) {
+        return null;
+      }
+      const section = document.createElement("section");
+      section.className = "report-context inference-section";
+
+      const heading = document.createElement("h3");
+      heading.textContent = "Inference results";
+      section.appendChild(heading);
+
+      if (details.summary) {
+        const summary = document.createElement("p");
+        summary.className = "inference-summary";
+        summary.textContent = details.summary;
+        section.appendChild(summary);
+      }
+
+      const metaRows = [];
+      if (details.threshold !== null) {
+        const thresholdText = formatConfidence(details.threshold);
+        if (thresholdText) {
+          metaRows.push(createMetaRow("Threshold", thresholdText));
+        }
+      }
+      if (details.endpoint) {
+        metaRows.push(createMetaRow("Endpoint", details.endpoint));
+      }
+      if (metaRows.length > 0) {
+        const metaContainer = document.createElement("div");
+        metaContainer.className = "inference-meta";
+        metaRows.forEach(function (row) {
+          metaContainer.appendChild(row);
+        });
+        section.appendChild(metaContainer);
+      }
+
+      if (details.detections && details.detections.length > 0) {
+        const list = document.createElement("ul");
+        list.className = "inference-detections";
+        details.detections.forEach(function (detection, index) {
+          const item = document.createElement("li");
+          const label = document.createElement("div");
+          label.className = "inference-detection-label";
+          label.textContent = detection.label || "Detection " + (index + 1);
+          item.appendChild(label);
+          const meta = document.createElement("div");
+          meta.className = "inference-detection-meta";
+          const parts = [];
+          if (typeof detection.confidence === "number") {
+            const formatted = formatConfidence(detection.confidence);
+            if (formatted) {
+              parts.push("Confidence " + formatted);
+            }
+          }
+          meta.textContent = parts.join(" • ") || "Confidence unavailable";
+          item.appendChild(meta);
+          list.appendChild(item);
+        });
+        section.appendChild(list);
+      }
+
+      if (details.extraDetections > 0) {
+        const more = document.createElement("p");
+        more.className = "inference-more";
+        more.textContent = "+" + details.extraDetections + " more detection" + (details.extraDetections === 1 ? "" : "s") + " not shown";
+        section.appendChild(more);
+      }
+
+      return section;
+    }
+
     function buildNotesSection(report) {
       if (!report || !report.notes) {
         return null;
@@ -1973,6 +2232,20 @@
       img.loading = "lazy";
       preview.appendChild(img);
       return preview;
+    }
+
+    function buildInferenceChip(report) {
+      const details = summarizeInferenceResult(report);
+      if (!details || !details.summary) {
+        return null;
+      }
+      const chip = document.createElement("p");
+      chip.className = "inference-chip";
+      chip.textContent = details.summary;
+      if (details.vapeDetected === true || details.cigaretteDetected === true) {
+        chip.dataset.positive = "true";
+      }
+      return chip;
     }
 
     async function submitAudit(reportId, payload) {
@@ -2257,7 +2530,8 @@
           includeWeather: false,
           includeLamppost: false,
           includePark: false,
-          includeFilename: true
+          includeFilename: true,
+          includeInference: false
         },
         options || {}
       );
@@ -2265,6 +2539,7 @@
       const lamppostDetails = summarizeLamppostContext(report ? report.location_context : null);
       const parkDetails = summarizeParkContext(report ? report.location_context : null);
       const auditSummary = summarizeAudit(report ? report.audit : null);
+      const inferenceSummary = config.includeInference ? summarizeInferenceResult(report) : null;
 
       const meta = document.createElement("div");
       meta.className = "meta";
@@ -2288,6 +2563,9 @@
       }
       if (config.includeAudit) {
         meta.appendChild(createMetaRow("Audit", auditSummary || "Not audited"));
+      }
+      if (config.includeInference && inferenceSummary && inferenceSummary.summary) {
+        meta.appendChild(createMetaRow("Inference", inferenceSummary.summary));
       }
       return meta;
     }
@@ -2331,6 +2609,15 @@
       const title = document.createElement("h2");
       title.textContent = "Report " + (report && report.report_id ? report.report_id : "Unknown");
       card.appendChild(title);
+      card.__titleEl = title;
+
+      const inferenceChip = buildInferenceChip(report);
+      if (inferenceChip) {
+        card.__inferenceChip = inferenceChip;
+        title.insertAdjacentElement("afterend", inferenceChip);
+      } else {
+        card.__inferenceChip = null;
+      }
 
       const badgeSummary = summarizeAudit(report ? report.audit : null);
       if (badgeSummary && report && report.audit && report.audit.status) {
@@ -2365,6 +2652,20 @@
       } else if (badge) {
         badge.remove();
       }
+
+      if (card.__inferenceChip && card.__inferenceChip.parentNode) {
+        card.__inferenceChip.remove();
+        card.__inferenceChip = null;
+      }
+      const updatedChip = buildInferenceChip(report);
+      if (updatedChip) {
+        if (card.__titleEl && card.__titleEl.parentNode === card) {
+          card.__titleEl.insertAdjacentElement("afterend", updatedChip);
+        } else {
+          card.appendChild(updatedChip);
+        }
+        card.__inferenceChip = updatedChip;
+      }
     }
 
     function renderReportDetails(report) {
@@ -2373,8 +2674,14 @@
         includeWeather: true,
         includeLamppost: true,
         includePark: true,
-        includeAudit: true
+        includeAudit: true,
+        includeInference: true
       }));
+
+      const inferenceSection = buildInferenceSection(report);
+      if (inferenceSection) {
+        fragment.appendChild(inferenceSection);
+      }
 
       const auditSection = buildAuditSection(report);
       if (auditSection) {
