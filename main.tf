@@ -543,6 +543,12 @@ data "aws_iam_policy_document" "lambda_inline" {
   }
 
   statement {
+    sid       = "DetectFaces"
+    actions   = ["rekognition:DetectFaces"]
+    resources = ["*"]
+  }
+
+  statement {
     sid     = "InvokeSageMakerEndpoint"
     actions = ["sagemaker:InvokeEndpoint"]
     resources = [
@@ -738,8 +744,9 @@ resource "aws_lambda_function" "redaction" {
   runtime          = "python3.11"
   environment {
     variables = {
-      RAW_BUCKET      = aws_s3_bucket.raw.bucket
-      EVIDENCE_BUCKET = aws_s3_bucket.evidence.bucket
+      RAW_BUCKET       = aws_s3_bucket.raw.bucket
+      EVIDENCE_BUCKET  = aws_s3_bucket.evidence.bucket
+      FACE_BLUR_RADIUS = tostring(var.face_blur_radius)
     }
   }
 }

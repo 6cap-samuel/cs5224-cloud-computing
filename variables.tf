@@ -55,3 +55,9 @@ variable "sagemaker_initial_instance_count" {
   type        = number
   default     = 1
 }
+
+variable "face_blur_radius" {
+  description = "Gaussian blur radius used when obfuscating faces"
+  type        = number
+  default     = 35
+}

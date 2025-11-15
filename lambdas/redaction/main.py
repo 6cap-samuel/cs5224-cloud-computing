@@ -3,12 +3,16 @@ import datetime as dt
 import os
 import re
 import uuid
+import io
 
 import boto3
+from PIL import Image, ImageFilter
 
 s3 = boto3.client("s3")
+rekognition = boto3.client("rekognition")
 RAW_BUCKET = os.environ["RAW_BUCKET"]
 EVIDENCE_BUCKET = os.environ.get("EVIDENCE_BUCKET")
+FACE_BLUR_RADIUS = int(os.environ.get("FACE_BLUR_RADIUS", "35"))
 
 _FILENAME_CLEAN_PATTERN = re.compile(r"[^A-Za-z0-9._-]+")
 
@@ -16,6 +20,33 @@ _FILENAME_CLEAN_PATTERN = re.compile(r"[^A-Za-z0-9._-]+")
 def _clean_filename(filename: str) -> str:
     sanitized = _FILENAME_CLEAN_PATTERN.sub("-", filename or "upload.bin")
     return sanitized.strip("-") or "upload.bin"
+
+
+def _blur_faces(image_bytes: bytes) -> bytes:
+    image = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    width, height = image.size
+
+    response = rekognition.detect_faces(Image={"Bytes": image_bytes}, Attributes=["DEFAULT"])
+    faces = response.get("FaceDetails") or []
+    if not faces:
+        return image_bytes
+
+    edited = image.copy()
+    for face in faces:
+        box = face.get("BoundingBox") or {}
+        left = int(box.get("Left", 0) * width)
+        top = int(box.get("Top", 0) * height)
+        w = int(box.get("Width", 0) * width)
+        h = int(box.get("Height", 0) * height)
+        if w <= 0 or h <= 0:
+            continue
+        region = edited.crop((left, top, left + w, top + h))
+        blurred = region.filter(ImageFilter.GaussianBlur(FACE_BLUR_RADIUS))
+        edited.paste(blurred, (left, top))
+
+    buffer = io.BytesIO()
+    edited.save(buffer, format="JPEG")
+    return buffer.getvalue()
 
 
 def lambda_handler(event, ctx):
@@ -32,8 +63,8 @@ def lambda_handler(event, ctx):
         event["ingest_error"] = "INVALID_BASE64"
         return event
 
-    filename = _clean_filename(event.get("filename", "evidence.bin"))
-    content_type = event.get("content_type", "application/octet-stream")
+    filename = _clean_filename(event.get("filename", "evidence.jpg"))
+    content_type = event.get("content_type", "image/jpeg")
     request_id = event.get("request_id") or str(uuid.uuid4())
     timestamp = dt.datetime.utcnow().strftime("%Y/%m/%d/%H%M%S")
     s3_key = f"{timestamp}/{request_id}/{filename}"
@@ -57,8 +88,19 @@ def lambda_handler(event, ctx):
     assets["raw"] = {"bucket": RAW_BUCKET, "key": s3_key}
     event["content_type"] = content_type
 
-    # Placeholder for future redaction logic (e.g., generating sanitized copy).
     if EVIDENCE_BUCKET:
-        assets["evidence_bucket"] = EVIDENCE_BUCKET
+        try:
+            redacted = _blur_faces(binary)
+        except Exception:
+            redacted = binary
+        evidence_key = f"{timestamp}/{request_id}/redacted_{filename}"
+        s3.put_object(
+            Bucket=EVIDENCE_BUCKET,
+            Key=evidence_key,
+            Body=redacted,
+            ContentType="image/jpeg",
+            Metadata={"request_id": request_id},
+        )
+        assets["evidence"] = {"bucket": EVIDENCE_BUCKET, "key": evidence_key}
 
     return event
