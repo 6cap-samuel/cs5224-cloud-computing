@@ -204,7 +204,7 @@ Table~\ref{tab:evaluation} highlights the main evaluation results. The inference
 The VapeWatch pilot demonstrates that cloud-native services can streamline nuisance enforcement: automated redaction, AI-assisted triage, and officer workflows reduce manual backlog review time by 63\% (2.4~minutes vs. 6.5~minutes per report during testing). Immediate next steps include: (i) retraining YOLOv8 quarterly with anonymised field captures; (ii) integrating NEA officer rosters via GovTech's Corppass for finer-grained audit trails; (iii) enabling multi-language interfaces for seniors; and (iv) experimenting with AWS A2 instances to halve inference costs once the workload stabilises.
 
 \section{Code Explanation and Deployment Guide}
-The complete source code for this project is available at frontend and infrastructure:\url{https://github.com/6cap-samuel/cs5224-cloud-computing} and backend and ML:\url{https://github.com/bhanut309/cloud_computing}.
+The complete source code for this project is available at frontend and infrastructure:\url{https://github.com/6cap-samuel/cs5224-cloud-computing} and ML:\url{https://github.com/bhanut309/cloud_computing}.
 \subsection{Repository layout}
 \begin{itemize}[leftmargin=*]
   \item \texttt{main.tf}, \texttt{variables.tf}, \texttt{outputs.tf}: Terraform root module provisioning all AWS services (S3, CloudFront, DynamoDB, Lambda, Step Functions, API Gateway, Cognito, SageMaker). Random suffixes keep bucket names globally unique.
